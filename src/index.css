@@ -1,0 +1,534 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base styles */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* FullCalendar event styles */
+.fc-event {
+  border-radius: 8px !important;
+  border: none !important;
+  padding: 4px 8px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.fc-event:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Dark mode calendar styles */
+.dark .fc-theme-standard .fc-scrollgrid {
+  border-color: #374151 !important;
+}
+
+.dark .fc-theme-standard td,
+.dark .fc-theme-standard th {
+  border-color: #374151 !important;
+}
+
+.dark .fc-col-header-cell {
+  background-color: #1f2937 !important;
+}
+
+.dark .fc-daygrid-day {
+  background-color: #111827 !important;
+}
+
+.dark .fc-day-today {
+  background-color: #1f2937 !important;
+}
+
+/* Loading spinner */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Fancy Select Animations */
+.fancy-select {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+.fancy-select:focus-within {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Custom dropdown arrow animation */
+.fancy-select .dropdown-arrow {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fancy-select:focus-within .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+/* Select focus ring animation */
+@keyframes focusRing {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+
+.fancy-select:focus {
+  animation: focusRing 0.4s ease-out;
+}
+
+/* Dark mode specific styles */
+.dark .fancy-select:focus-within {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* Pulse animation for validation errors */
+@keyframes errorPulse {
+  0%, 100% {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+}
+
+.fancy-select.error {
+  animation: errorPulse 1s ease-in-out;
+  border-color: #ef4444;
+}
+
+/* Success animation */
+@keyframes successGlow {
+  0% {
+    border-color: #10b981;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    border-color: #059669;
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+  100% {
+    border-color: #10b981;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.fancy-select.success {
+  animation: successGlow 1s ease-in-out;
+  border-color: #10b981;
+}
+
+/* Custom scrollbar for select dropdown */
+select::-webkit-scrollbar {
+  width: 8px;
+}
+
+select::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+select::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+select::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark select::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+.dark select::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+.dark select::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* Fancy Select Styles */
+.fancy-select-input {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fancy-select-input:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.fancy-select-input:focus {
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+
+.dark .fancy-select-input:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+.dark .fancy-select-input:focus {
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25);
+}
+
+/* Fancy Select Dropdown */
+.fancy-select-input {
+  position: relative;
+}
+
+.fancy-select-input option {
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  color: #1f2937;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  margin: 2px 0;
+}
+
+.dark .fancy-select-input option {
+  background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+  color: #f9fafb;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.fancy-select-input option:hover {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  transform: translateX(4px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+  border-color: #2563eb;
+}
+
+.dark .fancy-select-input option:hover {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.fancy-select-input option:checked {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  font-weight: 700;
+  transform: translateX(2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+  border-color: #059669;
+}
+
+.dark .fancy-select-input option:checked {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+/* Custom scrollbar for select dropdown */
+.fancy-select-input::-webkit-scrollbar {
+  width: 12px;
+}
+
+.fancy-select-input::-webkit-scrollbar-track {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  border-radius: 12px;
+  margin: 8px 4px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.fancy-select-input::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  border: 2px solid #ffffff;
+}
+
+.fancy-select-input::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+  transform: scaleY(1.1);
+}
+
+.dark .fancy-select-input::-webkit-scrollbar-track {
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.dark .fancy-select-input::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-color: #374151;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+}
+
+.dark .fancy-select-input::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.5);
+}
+
+/* Custom scrollbar for select dropdown */
+.fancy-select-input::-webkit-scrollbar {
+  width: 12px;
+}
+
+.fancy-select-input::-webkit-scrollbar-track {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  border-radius: 12px;
+  margin: 8px 4px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.fancy-select-input::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  border: 2px solid #ffffff;
+}
+
+.fancy-select-input::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+  transform: scaleY(1.1);
+}
+
+.dark .fancy-select-input::-webkit-scrollbar-track {
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.dark .fancy-select-input::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-color: #374151;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+}
+
+.dark .fancy-select-input::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.5);
+}
+
+/* Hide default calendar icon for date inputs but keep functionality */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  z-index: 10;
+}
+
+input[type="date"]::-webkit-inner-spin-button,
+input[type="date"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="date"]::-webkit-clear-button {
+  -webkit-appearance: none;
+  display: none;
+}
+
+/* Firefox */
+input[type="date"]::-moz-calendar-picker-indicator {
+  opacity: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  z-index: 10;
+}
+
+/* Custom scrollbar for dropdowns - always visible */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px !important;
+  display: block !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1 !important;
+  border-radius: 10px !important;
+  display: block !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #888 !important;
+  border-radius: 10px !important;
+  display: block !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #555 !important;
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin !important;
+  scrollbar-color: #888 #f1f1f1 !important;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-track {
+  background: #374151 !important;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #6b7280 !important;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af !important;
+}
+
+.dark .custom-scrollbar {
+  scrollbar-color: #6b7280 #374151 !important;
+}
+
+/* Dropdown animations */
+@keyframes dropdownSlideIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes dropdownOptionSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-dropdown {
+  animation: dropdownSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-dropdown-option {
+  animation: dropdownOptionSlideIn 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  opacity: 0;
+}
+
+/* Edge */
+input[type="date"]::-ms-calendar-picker-indicator {
+  opacity: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  z-index: 10;
+}
+
+.fc-event-green {
+  background-color: #10b981 !important;
+  border-color: #10b981 !important;
+}
+
+.fc-event-yellow {
+  background-color: #f59e0b !important;
+  border-color: #f59e0b !important;
+}
+
+.fc-event-red {
+  background-color: #ef4444 !important;
+  border-color: #ef4444 !important;
+}
+
+.fc-event-blue {
+  background-color: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+}
+
+/* Pulse border animation for LIVE effect */
+@keyframes pulse-border {
+  0%, 100% {
+    border-color: rgba(239, 68, 68, 1);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    border-color: rgba(239, 68, 68, 0.5);
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+}
+
+.animate-pulse-border {
+  animation: pulse-border 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

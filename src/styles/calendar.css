@@ -1,0 +1,682 @@
+/* Premium Linear/Notion-style Calendar CSS */
+
+/* Calendar Container */
+.fc {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  background: #ffffff !important;
+  border-radius: 28px !important;
+  padding: 24px 28px !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Ultra subtle grid lines */
+.fc .fc-col-header-cell,
+.fc .fc-timegrid-slot,
+.fc .fc-daygrid-day {
+  border-color: #EEF2F7 !important;
+  border-width: 1px !important;
+}
+
+/* Timegrid harness scaling based on zoom level */
+.fc .fc-timegrid-harness {
+  transform: scaleY(var(--slot-height-scale, 1)) !important;
+  transform-origin: top !important;
+}
+
+.fc .fc-timegrid-slot-minor {
+  border-color: rgba(238, 242, 247, 0.3) !important;
+}
+
+.dark .fc .fc-timegrid-slot-minor {
+  border-color: rgba(30, 41, 59, 0.3) !important;
+}
+
+.dark .fc .fc-col-header-cell,
+.dark .fc .fc-timegrid-slot,
+.dark .fc .fc-daygrid-day {
+  border-color: #1e293b !important;
+}
+
+/* Header styling - large title */
+.fc .fc-toolbar-title {
+  font-size: 42px !important;
+  font-weight: 700 !important;
+  color: #1F2937 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.dark .fc .fc-toolbar-title {
+  color: #f1f5f9 !important;
+}
+
+/* Navigation buttons - rounded outline */
+.fc .fc-button {
+  background: transparent !important;
+  border: 1px solid #EEF2F7 !important;
+  border-radius: 50% !important;
+  width: 36px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  color: #94A3B8 !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+  box-shadow: none !important;
+}
+
+.fc .fc-button:hover {
+  background: #EEF2F7 !important;
+  color: #1F2937 !important;
+  transform: scale(1.05) !important;
+}
+
+.dark .fc .fc-button {
+  border-color: #1e293b !important;
+  color: #64748b !important;
+}
+
+.dark .fc .fc-button:hover {
+  background: #1e293b !important;
+  color: #f1f5f9 !important;
+}
+
+/* Create button - indigo rounded */
+.fc .fc-button-primary {
+  background: #5B67F1 !important;
+  border: none !important;
+  color: #ffffff !important;
+  border-radius: 50px !important;
+  padding: 12px 26px !important;
+  width: auto !important;
+  height: auto !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  box-shadow: 0 2px 12px rgba(91, 103, 241, 0.3) !important;
+}
+
+.fc .fc-button-primary:hover {
+  background: #4a52d8 !important;
+  transform: scale(1.02) !important;
+  box-shadow: 0 4px 16px rgba(91, 103, 241, 0.4) !important;
+}
+
+/* Day headers */
+.fc .fc-col-header-cell-cushion {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 12px !important;
+  color: #94A3B8 !important;
+}
+
+.fc .fc-day-header-widget .fc-col-header-cell-cushion {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  margin-bottom: 4px !important;
+}
+
+.fc .fc-day-number {
+  font-size: 42px !important;
+  font-weight: 600 !important;
+  color: #94A3B8 !important;
+  margin-top: 4px !important;
+  line-height: 1 !important;
+}
+
+/* Active day styling */
+.fc .fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion,
+.fc .fc-col-header-cell.fc-day-today .fc-day-number {
+  color: #5B67F1 !important;
+}
+
+.fc .fc-day-today {
+  background: rgba(91, 103, 241, 0.03) !important;
+}
+
+.dark .fc .fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion,
+.dark .fc .fc-col-header-cell.fc-day-today .fc-day-number {
+  color: #818cf8 !important;
+}
+
+.dark .fc .fc-day-today {
+  background: rgba(129, 140, 248, 0.05) !important;
+}
+
+/* Time slot labels */
+.fc .fc-timegrid-slot-label {
+  color: #94A3B8 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  padding: 8px !important;
+}
+
+.dark .fc .fc-timegrid-slot-label {
+  color: #64748b !important;
+}
+
+/* Time slot height - more whitespace */
+.fc .fc-timegrid-slot {
+  height: 50px !important;
+  min-height: 50px !important;
+}
+
+/* Event cards - pastel floating cards */
+.calendar-event {
+  border-radius: 18px !important;
+  padding: 16px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border: none !important;
+  border-left: 4px solid !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.calendar-event:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Event time styling */
+.fc-event-time {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  margin-bottom: 8px !important;
+  opacity: 0.8 !important;
+  border: none !important;
+  padding-bottom: 0 !important;
+}
+
+/* Event title styling */
+.fc-event-title {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Pastel backgrounds for statuses */
+.calendar-event.pending {
+  background: rgba(251, 191, 36, 0.15) !important;
+  border-left-color: #f59e0b !important;
+  color: #92400e !important;
+}
+
+.calendar-event.in_progress {
+  background: rgba(59, 130, 246, 0.15) !important;
+  border-left-color: #3b82f6 !important;
+  color: #1e40af !important;
+}
+
+.calendar-event.completed {
+  background: rgba(16, 185, 129, 0.15) !important;
+  border-left-color: #10b981 !important;
+  color: #065f46 !important;
+}
+
+.calendar-event.cancelled {
+  background: rgba(239, 68, 68, 0.15) !important;
+  border-left-color: #ef4444 !important;
+  color: #991b1b !important;
+  opacity: 0.6 !important;
+}
+
+.dark .calendar-event.pending {
+  background: rgba(251, 191, 36, 0.2) !important;
+  color: #fcd34d !important;
+}
+
+.dark .calendar-event.in_progress {
+  background: rgba(59, 130, 246, 0.2) !important;
+  color: #93c5fd !important;
+}
+
+.dark .calendar-event.completed {
+  background: rgba(16, 185, 129, 0.2) !important;
+  color: #6ee7b7 !important;
+}
+
+.dark .calendar-event.cancelled {
+  background: rgba(239, 68, 68, 0.2) !important;
+  color: #fca5a5 !important;
+}
+
+/* Student ID badge */
+.student-id-badge {
+  position: absolute !important;
+  bottom: 8px !important;
+  right: 12px !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  background: rgba(0, 0, 0, 0.05) !important;
+  padding: 4px 8px !important;
+  border-radius: 6px !important;
+  color: #ffffff !important;
+}
+
+.dark .student-id-badge {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+}
+
+/* Selection styling */
+.fc .fc-highlight {
+  background: rgba(91, 103, 241, 0.08) !important;
+  border: none !important;
+  border-radius: 8px !important;
+}
+
+.fc-timegrid .fc-timegrid-slot,
+.fc-timegrid .fc-timegrid-slots,
+.fc-timegrid .fc-timegrid-harness {
+  transition: all 0.15s ease-out !important;
+}
+
+/* Drag and drop animations */
+.fc-event {
+  transition: all 0.2s ease-out !important;
+}
+
+.fc-event-mirror {
+  transition: all 0.2s ease-out !important;
+  opacity: 0.6 !important;
+}
+
+.fc-dragging {
+  transition: none !important;
+  opacity: 0.8 !important;
+}
+
+.dark .fc .fc-highlight {
+  background: rgba(129, 140, 248, 0.12) !important;
+}
+
+/* Scrollbar - minimal */
+.fc-scroller {
+  scrollbar-width: thin !important;
+  scrollbar-color: #EEF2F7 transparent !important;
+}
+
+.dark .fc-scroller {
+  scrollbar-color: #1e293b transparent !important;
+}
+
+.fc-scroller::-webkit-scrollbar {
+  width: 4px !important;
+  height: 4px !important;
+}
+
+.fc-scroller::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.fc-scroller::-webkit-scrollbar-thumb {
+  background: #EEF2F7 !important;
+  border-radius: 2px !important;
+}
+
+.dark .fc-scroller::-webkit-scrollbar-thumb {
+  background: #1e293b !important;
+}
+
+/* Weekend styling - subtle */
+.fc .fc-day-sat,
+.fc .fc-day-sun {
+  background: #fafafa !important;
+}
+
+.dark .fc .fc-day-sat,
+.dark .fc .fc-day-sun {
+  background: #0f172a !important;
+}
+
+/* Toolbar spacing */
+.fc .fc-toolbar {
+  margin-bottom: 28px !important;
+}
+
+.fc .fc-toolbar-chunk {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+/* Resource timeline styling */
+.fc-resource-timeline .fc-resource-area {
+  background: #fafafa !important;
+}
+
+.dark .fc-resource-timeline .fc-resource-area {
+  background: #0f172a !important;
+}
+
+.fc-resource-timeline .fc-resource-area-header {
+  background: #EEF2F7 !important;
+  color: #1F2937 !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+}
+
+.dark .fc-resource-timeline .fc-resource-area-header {
+  background: #1e293b !important;
+  color: #f1f5f9 !important;
+}
+
+.fc-resource-timeline .fc-resource {
+  background: #ffffff !important;
+  border-bottom: 1px solid #EEF2F7 !important;
+  padding: 12px !important;
+}
+
+.dark .fc-resource-timeline .fc-resource {
+  background: #0f172a !important;
+  border-bottom: 1px solid #1e293b !important;
+}
+
+.fc-resource-timeline .fc-resource:hover {
+  background: #fafafa !important;
+}
+
+.dark .fc-resource-timeline .fc-resource:hover {
+  background: #1e293b !important;
+}
+
+/* More events link */
+.fc .fc-more-link {
+  color: #5B67F1 !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+}
+
+.dark .fc .fc-more-link {
+  color: #818cf8 !important;
+}
+
+.fc .fc-more-link:hover {
+  color: #4a52d8 !important;
+}
+
+.dark .fc .fc-more-link:hover {
+  color: #6366f1 !important;
+}
+
+/* Fancy header toolbar buttons */
+.fc .fc-toolbar-title {
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  color: #1f2937 !important;
+}
+
+.dark .fc .fc-toolbar-title {
+  color: #f9fafb !important;
+}
+
+.fc .fc-button {
+  background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 8px 16px !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  color: white !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3) !important;
+}
+
+.fc .fc-button.fc-timeGridWeek-button {
+  border-radius: 0 !important;
+}
+
+.fc .fc-button:hover {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4) !important;
+}
+
+.fc .fc-button:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3) !important;
+}
+
+.fc .fc-button-primary {
+  background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+}
+
+.fc .fc-button-active {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3) !important;
+}
+
+.fc .fc-button-active:hover {
+  background: linear-gradient(135deg, #059669, #047857) !important;
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.4) !important;
+}
+
+.dark .fc .fc-button {
+  background: linear-gradient(135deg, #60a5fa, #3b82f6) !important;
+  box-shadow: 0 2px 4px rgba(96, 165, 250, 0.3) !important;
+}
+
+.dark .fc .fc-button:hover {
+  background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+  box-shadow: 0 4px 8px rgba(96, 165, 250, 0.4) !important;
+}
+
+.dark .fc .fc-button-active {
+  background: linear-gradient(135deg, #34d399, #10b981) !important;
+  box-shadow: 0 2px 4px rgba(52, 211, 153, 0.3) !important;
+}
+
+.dark .fc .fc-button-active:hover {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  box-shadow: 0 4px 8px rgba(52, 211, 153, 0.4) !important;
+}
+
+/* Fancy prev/next buttons */
+.fc .fc-button-group .fc-button:first-child {
+  border-radius: 8px 0 0 8px !important;
+}
+
+.fc .fc-button-group .fc-button:last-child {
+  border-radius: 0 8px 8px 0 !important;
+}
+
+.fc .fc-button-group .fc-button:only-child {
+  border-radius: 8px !important;
+}
+
+/* Custom button spacing */
+.fc .fc-toolbar {
+  margin-bottom: 1rem !important;
+}
+
+.fc .fc-toolbar-chunk {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+/* Modern minimalist calendar styling */
+.fc {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+/* Grid lines - minimal and subtle */
+.fc .fc-col-header-cell,
+.fc .fc-timegrid-slot,
+.fc .fc-daygrid-day {
+  border-color: #e5e7eb !important;
+}
+
+.dark .fc .fc-col-header-cell,
+.dark .fc .fc-timegrid-slot,
+.dark .fc .fc-daygrid-day {
+  border-color: #374151 !important;
+}
+
+/* Header cells - modern styling */
+.fc .fc-col-header-cell-cushion {
+  color: #374151 !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+.dark .fc .fc-col-header-cell-cushion {
+  color: #e5e7eb !important;
+}
+
+.fc .fc-col-header-cell-cushion:hover {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+.dark .fc .fc-col-header-cell-cushion:hover {
+  background-color: rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Time slots - cleaner look */
+.fc .fc-timegrid-slot-label {
+  color: #6b7280 !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+}
+
+.dark .fc .fc-timegrid-slot-label {
+  color: #9ca3af !important;
+}
+
+/* Resource timeline styling */
+.fc-resource-timeline .fc-resource-area {
+  background-color: #f9fafb !important;
+}
+
+.dark .fc-resource-timeline .fc-resource-area {
+  background-color: #1f2937 !important;
+}
+
+.fc-resource-timeline .fc-resource-area-header {
+  background-color: #f3f4f6 !important;
+  color: #374151 !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+}
+
+.dark .fc-resource-timeline .fc-resource-area-header {
+  background-color: #374151 !important;
+  color: #e5e7eb !important;
+}
+
+.fc-resource-timeline .fc-resource {
+  background-color: #ffffff !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  padding: 8px 12px !important;
+}
+
+.dark .fc-resource-timeline .fc-resource {
+  background-color: #1f2937 !important;
+  border-bottom: 1px solid #374151 !important;
+}
+
+.fc-resource-timeline .fc-resource:hover {
+  background-color: #f3f4f6 !important;
+}
+
+.dark .fc-resource-timeline .fc-resource:hover {
+  background-color: #374151 !important;
+}
+
+/* Today highlight - subtle */
+.fc .fc-day-today {
+  background-color: rgba(59, 130, 246, 0.05) !important;
+}
+
+.dark .fc .fc-day-today {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+/* Weekend styling */
+.fc .fc-day-sat,
+.fc .fc-day-sun {
+  background-color: #f9fafb !important;
+}
+
+.dark .fc .fc-day-sat,
+.dark .fc .fc-day-sun {
+  background-color: #1f2937 !important;
+}
+
+/* Scrollbar styling */
+.fc-scroller {
+  scrollbar-width: thin !important;
+  scrollbar-color: #cbd5e1 #f1f5f9 !important;
+}
+
+.dark .fc-scroller {
+  scrollbar-color: #4b5563 #1f2937 !important;
+}
+
+.fc-scroller::-webkit-scrollbar {
+  width: 6px !important;
+  height: 6px !important;
+}
+
+.fc-scroller::-webkit-scrollbar-track {
+  background: #f1f5f9 !important;
+}
+
+.dark .fc-scroller::-webkit-scrollbar-track {
+  background: #1f2937 !important;
+}
+
+.fc-scroller::-webkit-scrollbar-thumb {
+  background: #cbd5e1 !important;
+  border-radius: 3px !important;
+}
+
+.dark .fc-scroller::-webkit-scrollbar-thumb {
+  background: #4b5563 !important;
+}
+
+.fc-scroller::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8 !important;
+}
+
+.dark .fc-scroller::-webkit-scrollbar-thumb:hover {
+  background: #6b7280 !important;
+}
+
+/* Selection styling */
+.fc .fc-highlight {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+  border: none !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.dark .fc .fc-highlight {
+  background-color: rgba(59, 130, 246, 0.25) !important;
+}
+
+/* More events link */
+.fc .fc-more-link {
+  color: #3b82f6 !important;
+  font-weight: 600 !important;
+  font-size: 0.75rem !important;
+}
+
+.dark .fc .fc-more-link {
+  color: #60a5fa !important;
+}
+
+.fc .fc-more-link:hover {
+  color: #2563eb !important;
+}
+
+.dark .fc .fc-more-link:hover {
+  color: #3b82f6 !important;
+}

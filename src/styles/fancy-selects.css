@@ -1,0 +1,197 @@
+/* Fancy Select Animations */
+
+/* Select hover animations */
+.fancy-select {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fancy-select:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.fancy-select:focus-within {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 15px 35px rgba(59, 130, 246, 0.15);
+}
+
+/* Custom dropdown arrow animation */
+.fancy-select .dropdown-arrow {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fancy-select:focus-within .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+/* Option hover effects */
+.fancy-select option {
+  padding: 12px 16px;
+  transition: all 0.2s ease;
+}
+
+.fancy-select option:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  transform: translateX(4px);
+}
+
+/* Select focus ring animation */
+@keyframes focusRing {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+
+.fancy-select:focus {
+  animation: focusRing 0.6s ease-out;
+}
+
+/* Loading animation for selects */
+.fancy-select.loading::after {
+  content: '';
+  position: absolute;
+  right: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e5e7eb;
+  border-top: 2px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: translateY(-50%) rotate(0deg); }
+  100% { transform: translateY(-50%) rotate(360deg); }
+}
+
+/* Dark mode specific animations */
+.dark .fancy-select:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.dark .fancy-select:focus-within {
+  box-shadow: 0 15px 35px rgba(59, 130, 246, 0.25);
+}
+
+/* Pulse animation for validation errors */
+@keyframes errorPulse {
+  0%, 100% {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+}
+
+.fancy-select.error {
+  animation: errorPulse 1s ease-in-out;
+  border-color: #ef4444;
+}
+
+/* Success animation */
+@keyframes successGlow {
+  0% {
+    border-color: #10b981;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    border-color: #059669;
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+  100% {
+    border-color: #10b981;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.fancy-select.success {
+  animation: successGlow 1s ease-in-out;
+  border-color: #10b981;
+}
+
+/* Floating label animation */
+.fancy-select-wrapper {
+  position: relative;
+}
+
+.fancy-select-wrapper label {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  background: white;
+  padding: 0 4px;
+}
+
+.dark .fancy-select-wrapper label {
+  background: #1f2937;
+}
+
+.fancy-select-wrapper.focused label,
+.fancy-select-wrapper.has-value label {
+  top: 0;
+  font-size: 12px;
+  color: #3b82f6;
+}
+
+/* Select dropdown opening animation */
+@keyframes dropdownOpen {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fancy-select:focus + .dropdown-options {
+  animation: dropdownOpen 0.3s ease-out;
+}
+
+/* Custom scrollbar for select dropdown */
+.fancy-select::-webkit-scrollbar {
+  width: 8px;
+}
+
+.fancy-select::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.fancy-select::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+.fancy-select::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark .fancy-select::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+.dark .fancy-select::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+.dark .fancy-select::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
