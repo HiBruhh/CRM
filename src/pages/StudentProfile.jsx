@@ -16,7 +16,7 @@ const StudentProfile = () => {
   const { theme } = useTheme()
   const [student, setStudent] = useState(null)
   const [lessons, setLessons] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [accessDenied, setAccessDenied] = useState(false)
   const [showChecklistModal, setShowChecklistModal] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -412,7 +412,6 @@ const StudentProfile = () => {
   const getLessonStatusColor = (status) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800'
-      case 'confirmed': return 'bg-blue-100 text-blue-800'
       case 'in_progress': return 'bg-green-100 text-green-800'
       case 'completed': return 'bg-gray-100 text-gray-800'
       case 'cancelled': return 'bg-red-100 text-red-800'
@@ -423,7 +422,6 @@ const StudentProfile = () => {
   const getLessonStatusText = (status) => {
     switch (status) {
       case 'pending': return 'Oczekuje'
-      case 'confirmed': return 'Potwierdzona'
       case 'in_progress': return 'W trakcie'
       case 'completed': return 'Zakończona'
       case 'cancelled': return 'Anulowana'
@@ -509,7 +507,7 @@ const StudentProfile = () => {
         const { error: deleteError } = await supabase
           .from('driving_lessons')
           .delete()
-          .in('status', ['pending', 'confirmed'])
+          .in('status', ['pending'])
           .eq('student_id', studentId)
 
         if (deleteError) {
@@ -920,95 +918,166 @@ const StudentProfile = () => {
 
       {/* Checklist Modal */}
       {showChecklistModal && selectedLesson && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-dark-100 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-dark-100 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-dark-200">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-900">
-                Checklist - {formatLocalDate(selectedLesson.start_time)}
-              </h3>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-900">
+                  Checklist jazdy
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-dark-500">
+                  {formatLocalDate(selectedLesson.start_time)} · {formatLocalTime(selectedLesson.start_time)}
+                </p>
+              </div>
               <button
                 onClick={() => setShowChecklistModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-dark-200 transition-colors"
               >
-                <XCircle className="h-5 w-5" />
+                <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="p-6">
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900 dark:text-dark-900">Umiejętności praktyczne</h4>
-                {[
-                  { key: 'vehicle_preparation', label: 'Przygotowanie pojazdu' },
-                  { key: 'controls_familiarity', label: 'Znajomość kontroli' },
-                  { key: 'steering_control', label: 'Sterowanie kierownicą' },
-                  { key: 'acceleration_braking', label: 'Przyspieszanie i hamowanie' },
-                  { key: 'gear_shifting', label: 'Zmiana biegów' },
-                  { key: 'mirror_use', label: 'Używanie luster' },
-                  { key: 'blind_spot_check', label: 'Sprawdzanie martwego pola' },
-                  { key: 'lane_positioning', label: 'Pozycjonowanie na pasie' },
-                  { key: 'turning', label: 'Skręcanie' },
-                  { key: 'parking', label: 'Parkowanie' },
-                ].map((item) => (
-                  <div key={item.key}>
-                    <div className="flex justify-between mb-2">
-                      <label className="text-gray-700 dark:text-dark-900">{item.label}</label>
-                      <span className="text-sm font-medium text-primary-600 dark:text-primary-400">{checklistData[item.key]}/10</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="10"
-                      value={checklistData[item.key]}
-                      onChange={(e) => setChecklistData({ ...checklistData, [item.key]: parseInt(e.target.value) })}
-                      className="w-full h-2 bg-gray-200 dark:bg-dark-200 rounded-lg appearance-none cursor-pointer accent-primary-600"
-                    />
-                  </div>
-                ))}
 
-                <h4 className="font-medium text-gray-900 dark:text-dark-900 pt-4">Znajomość przepisów</h4>
-                {[
-                  { key: 'traffic_rules', label: 'Przepisy ruchu drogowego' },
-                  { key: 'road_signs', label: 'Znaki drogowe' },
-                  { key: 'emergency_procedures', label: 'Procedury awaryjne' },
-                ].map((item) => (
-                  <div key={item.key}>
-                    <div className="flex justify-between mb-2">
-                      <label className="text-gray-700 dark:text-dark-900">{item.label}</label>
-                      <span className="text-sm font-medium text-primary-600 dark:text-primary-400">{checklistData[item.key]}/10</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="10"
-                      value={checklistData[item.key]}
-                      onChange={(e) => setChecklistData({ ...checklistData, [item.key]: parseInt(e.target.value) })}
-                      className="w-full h-2 bg-gray-200 dark:bg-dark-200 rounded-lg appearance-none cursor-pointer accent-primary-600"
-                    />
-                  </div>
-                ))}
+            <div className="p-6 space-y-6">
+              {/* Overall score summary */}
+              <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-dark-200/50 rounded-xl">
+                <div className={`flex items-center justify-center w-16 h-16 rounded-full text-xl font-bold ${(() => {
+                  const score = Math.round(Object.keys(checklistData).filter(k => typeof checklistData[k] === 'number').reduce((a, k) => a + checklistData[k], 0) / 13 * 10)
+                  if (score >= 80) return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                  if (score >= 60) return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                  return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                })()}`}>
+                  {Math.round(Object.keys(checklistData).filter(k => typeof checklistData[k] === 'number').reduce((a, k) => a + checklistData[k], 0) / 13 * 10)}%
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-dark-900">Ocena ogólna</p>
+                  <p className="text-sm text-gray-500 dark:text-dark-500">
+                    {(() => {
+                      const score = Math.round(Object.keys(checklistData).filter(k => typeof checklistData[k] === 'number').reduce((a, k) => a + checklistData[k], 0) / 13 * 10)
+                      if (score >= 80) return 'Bardzo dobrze — kursant radzi sobie świetnie'
+                      if (score >= 60) return 'Dobrze — są jeszcze elementy do przećwiczenia'
+                      return 'Wymaga pracy — warto powtórzyć podstawy'
+                    })()}
+                  </p>
+                </div>
+              </div>
 
-                <h4 className="font-medium text-gray-900 dark:text-dark-900 pt-4">Notatki instruktora</h4>
+              {/* Skills section */}
+              <div className="bg-white dark:bg-dark-100 border border-gray-200 dark:border-dark-200 rounded-xl p-4">
+                <h4 className="font-semibold text-gray-900 dark:text-dark-900 mb-4 flex items-center gap-2">
+                  <Car className="h-4 w-4 text-primary-600" />
+                  Umiejętności praktyczne
+                </h4>
+                <div className="space-y-5">
+                  {[
+                    { key: 'vehicle_preparation', label: 'Przygotowanie pojazdu' },
+                    { key: 'controls_familiarity', label: 'Znajomość kontroli' },
+                    { key: 'steering_control', label: 'Sterowanie kierownicą' },
+                    { key: 'acceleration_braking', label: 'Przyspieszanie i hamowanie' },
+                    { key: 'gear_shifting', label: 'Zmiana biegów' },
+                    { key: 'mirror_use', label: 'Używanie luster' },
+                    { key: 'blind_spot_check', label: 'Sprawdzanie martwego pola' },
+                    { key: 'lane_positioning', label: 'Pozycjonowanie na pasie' },
+                    { key: 'turning', label: 'Skręcanie' },
+                    { key: 'parking', label: 'Parkowanie' },
+                  ].map((item) => (
+                    <div key={item.key}>
+                      <div className="flex justify-between items-center mb-2">
+                        <label className="text-sm font-medium text-gray-700 dark:text-dark-900">{item.label}</label>
+                        <span className={`inline-flex items-center justify-center w-9 h-6 rounded text-xs font-semibold ${(() => {
+                          const v = checklistData[item.key] || 0
+                          if (v >= 8) return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                          if (v >= 5) return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                          return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                        })()}`}>
+                          {checklistData[item.key] || 0}
+                        </span>
+                      </div>
+                      <div className="relative flex items-center gap-2">
+                        <span className="text-xs text-gray-400 w-4">0</span>
+                        <input
+                          type="range"
+                          min="0"
+                          max="10"
+                          value={checklistData[item.key] || 0}
+                          onChange={(e) => setChecklistData({ ...checklistData, [item.key]: parseInt(e.target.value) })}
+                          className="flex-1 h-2 bg-gray-200 dark:bg-dark-200 rounded-lg appearance-none cursor-pointer accent-primary-600"
+                        />
+                        <span className="text-xs text-gray-400 w-6 text-right">10</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Theory section */}
+              <div className="bg-white dark:bg-dark-100 border border-gray-200 dark:border-dark-200 rounded-xl p-4">
+                <h4 className="font-semibold text-gray-900 dark:text-dark-900 mb-4 flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-primary-600" />
+                  Znajomość przepisów
+                </h4>
+                <div className="space-y-5">
+                  {[
+                    { key: 'traffic_rules', label: 'Przepisy ruchu drogowego' },
+                    { key: 'road_signs', label: 'Znaki drogowe' },
+                    { key: 'emergency_procedures', label: 'Procedury awaryjne' },
+                  ].map((item) => (
+                    <div key={item.key}>
+                      <div className="flex justify-between items-center mb-2">
+                        <label className="text-sm font-medium text-gray-700 dark:text-dark-900">{item.label}</label>
+                        <span className={`inline-flex items-center justify-center w-9 h-6 rounded text-xs font-semibold ${(() => {
+                          const v = checklistData[item.key] || 0
+                          if (v >= 8) return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                          if (v >= 5) return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                          return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                        })()}`}>
+                          {checklistData[item.key] || 0}
+                        </span>
+                      </div>
+                      <div className="relative flex items-center gap-2">
+                        <span className="text-xs text-gray-400 w-4">0</span>
+                        <input
+                          type="range"
+                          min="0"
+                          max="10"
+                          value={checklistData[item.key] || 0}
+                          onChange={(e) => setChecklistData({ ...checklistData, [item.key]: parseInt(e.target.value) })}
+                          className="flex-1 h-2 bg-gray-200 dark:bg-dark-200 rounded-lg appearance-none cursor-pointer accent-primary-600"
+                        />
+                        <span className="text-xs text-gray-400 w-6 text-right">10</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Instructor notes */}
+              <div className="bg-white dark:bg-dark-100 border border-gray-200 dark:border-dark-200 rounded-xl p-4">
+                <h4 className="font-semibold text-gray-900 dark:text-dark-900 mb-3 flex items-center gap-2">
+                  <Star className="h-4 w-4 text-primary-600" />
+                  Notatki instruktora
+                </h4>
                 <textarea
-                  value={checklistData.instructor_notes}
+                  value={checklistData.instructor_notes || ''}
                   onChange={(e) => setChecklistData({ ...checklistData, instructor_notes: e.target.value })}
                   rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-dark-200 dark:text-dark-900"
-                  placeholder="Dodaj notatki o postępie kursanta..."
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-dark-200 dark:text-dark-900 resize-none"
+                  placeholder="Co poszło dobrze? Co wymaga powtórki?..."
                 />
               </div>
 
-              <div className="flex justify-end space-x-3 mt-6">
+              <div className="flex justify-end gap-3 pt-2">
                 <button
                   onClick={() => setShowChecklistModal(false)}
-                  className="px-4 py-2 border border-gray-300 dark:border-dark-300 rounded-lg text-gray-700 dark:text-dark-900 hover:bg-gray-50 dark:hover:bg-dark-200"
+                  className="px-4 py-2 border border-gray-300 dark:border-dark-300 rounded-lg text-gray-700 dark:text-dark-900 hover:bg-gray-50 dark:hover:bg-dark-200 font-medium transition-colors"
                 >
                   Anuluj
                 </button>
                 <button
                   onClick={handleSaveChecklist}
                   disabled={isSaving}
-                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                  className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 font-medium transition-colors"
                 >
-                  {isSaving ? 'Zapisywanie...' : 'Zapisz'}
+                  {isSaving ? 'Zapisywanie...' : 'Zapisz checklistę'}
                 </button>
               </div>
             </div>

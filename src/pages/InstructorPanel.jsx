@@ -12,7 +12,7 @@ const InstructorPanel = () => {
   const navigate = useNavigate()
   const [lessons, setLessons] = useState([])
   const [students, setStudents] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
 
   const fetchDashboardData = async () => {
     try {
@@ -60,7 +60,6 @@ const InstructorPanel = () => {
       const statusPriority = {
         'in_progress': 4,
         'pending': 3,
-        'confirmed': 3,
         'completed': 2,
         'cancelled': 1
       }
@@ -140,8 +139,9 @@ const InstructorPanel = () => {
   }
 
   useEffect(() => {
+    if (!user?.id) return
     fetchDashboardData()
-  }, [user])
+  }, [user?.id])
 
   const getWeekStats = () => {
     const now = new Date()
@@ -180,7 +180,6 @@ const InstructorPanel = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800'
-      case 'confirmed': return 'bg-green-100 text-green-800'
       case 'in_progress': return 'bg-blue-100 text-blue-800'
       case 'completed': return 'bg-gray-100 text-gray-800'
       case 'cancelled': return 'bg-red-100 text-red-800'
@@ -191,7 +190,6 @@ const InstructorPanel = () => {
   const getStatusLabel = (status) => {
     switch (status) {
       case 'pending': return 'Oczekuje'
-      case 'confirmed': return 'Potwierdzona'
       case 'in_progress': return 'W trakcie'
       case 'completed': return 'Zakończona'
       case 'cancelled': return 'Anulowana'
@@ -203,7 +201,6 @@ const InstructorPanel = () => {
     switch (status) {
       case 'in_progress': return 'bg-blue-100 dark:bg-blue-900/40'
       case 'pending': return 'bg-yellow-100 dark:bg-yellow-900/40'
-      case 'confirmed': return 'bg-yellow-100 dark:bg-yellow-900/40'
       case 'completed': return 'bg-green-100 dark:bg-green-900/40'
       case 'cancelled': return 'bg-red-100 dark:bg-red-900/40'
       default: return 'bg-gray-100 dark:bg-dark-200'

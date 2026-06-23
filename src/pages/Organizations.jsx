@@ -10,7 +10,7 @@ const Organizations = () => {
   const supabase = useSupabase()
   const navigate = useNavigate()
   const [organizations, setOrganizations] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [selectedOrg, setSelectedOrg] = useState(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -51,9 +51,10 @@ const Organizations = () => {
       return
     }
     fetchOrganizations()
-  }, [user, navigate])
+  }, [user?.id, navigate])
 
   const fetchOrganizations = async () => {
+    setLoading(true)
     try {
       const { data, error } = await supabase
         .from('organizations')

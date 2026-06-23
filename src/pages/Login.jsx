@@ -13,31 +13,21 @@ const Login = () => {
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
-  const [mounted, setMounted] = useState(false)
-
-  React.useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!mounted) {
-    return <LoadingSpinner text="Inicjalizacja..." />
-  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      const user = await login(email, password)
-      // Przekieruj w zależności od roli
-      if (user?.role === 'instructor') {
-        navigate('/instructor-panel')
+      const loggedUser = await login(email, password)
+      // setUser już wywołane w login() — nawigujemy bezpośrednio
+      if (loggedUser?.role === 'instructor') {
+        navigate('/instructor-panel', { replace: true })
       } else {
-        navigate('/dashboard')
+        navigate('/dashboard', { replace: true })
       }
     } catch (error) {
       console.error('Login error:', error)
-    } finally {
       setLoading(false)
     }
   }

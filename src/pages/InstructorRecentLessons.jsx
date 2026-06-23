@@ -14,7 +14,7 @@ const InstructorRecentLessons = () => {
   const { user } = useAuth()
   const { theme } = useTheme()
   const [lessons, setLessons] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [showChecklistModal, setShowChecklistModal] = useState(false)
   const [selectedLesson, setSelectedLesson] = useState(null)
   const [checklistData, setChecklistData] = useState({
@@ -37,10 +37,12 @@ const InstructorRecentLessons = () => {
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(null)
 
   useEffect(() => {
+    if (!user?.id) return
     fetchLessons()
-  }, [])
+  }, [user?.id])
 
   const fetchLessons = async () => {
+    setLoading(true)
     try {
       // Get instructor ID from user metadata
       const { data: instructorData, error: instructorError } = await supabase
@@ -158,8 +160,6 @@ const InstructorRecentLessons = () => {
         return 'Anulowana'
       case 'in_progress':
         return 'W trakcie'
-      case 'confirmed':
-        return 'Potwierdzona'
       default:
         return status
     }

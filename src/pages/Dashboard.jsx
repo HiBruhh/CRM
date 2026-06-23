@@ -13,7 +13,7 @@ const Dashboard = () => {
   const { theme } = useTheme()
   const supabase = useSupabase()
   const navigate = useNavigate()
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [stats, setStats] = useState({
     totalStudents: 0,
     todayLessons: 0,
@@ -27,7 +27,15 @@ const Dashboard = () => {
 
   // Pobieranie danych statystyk z Supabase
   useEffect(() => {
+    if (!user?.id) return
+    let cancelled = false
+
     const fetchStats = async () => {
+      if (cancelled) return
+      setLoading(true)
+      const slowTimer = setTimeout(() => {
+        if (!cancelled) console.warn('fetchStats: zapytania trwają >5s — możliwy problem z siecią lub Supabase')
+      }, 5000)
       try {
         console.log('Fetching dashboard stats...')
         
@@ -36,7 +44,10 @@ const Dashboard = () => {
           .from('students')
           .select('*', { count: 'exact', head: true })
         if (isOrgAdmin) studentsQuery = studentsQuery.eq('organization_id', user.organizationId)
-        const { count: studentsCount } = await studentsQuery
+        const { count: studentsCount, error: e1 } = await studentsQuery
+        if (cancelled) return
+        if (e1) throw e1
+        console.log('Query 1/5 ok - students:', studentsCount)
 
         // Pobieramy dzisiejsze jazdy
         const today = new Date().toISOString().split('T')[0]
@@ -46,14 +57,20 @@ const Dashboard = () => {
           .gte('start_time', today)
           .lt('start_time', new Date(new Date(today).setDate(new Date(today).getDate() + 1)).toISOString())
         if (isOrgAdmin) todayLessonsQuery = todayLessonsQuery.eq('organization_id', user.organizationId)
-        const { count: todayLessonsCount } = await todayLessonsQuery
+        const { count: todayLessonsCount, error: e2 } = await todayLessonsQuery
+        if (cancelled) return
+        if (e2) throw e2
+        console.log('Query 2/5 ok - today lessons:', todayLessonsCount)
 
         // Pobieramy liczbę instruktorów
         let instructorsQuery = supabase
           .from('instructors')
           .select('*', { count: 'exact', head: true })
         if (isOrgAdmin) instructorsQuery = instructorsQuery.eq('organization_id', user.organizationId)
-        const { count: instructorsCount } = await instructorsQuery
+        const { count: instructorsCount, error: e3 } = await instructorsQuery
+        if (cancelled) return
+        if (e3) throw e3
+        console.log('Query 3/5 ok - instructors:', instructorsCount)
 
         // Obliczamy godziny w tym tygodniu
         const weekStart = new Date()
@@ -73,7 +90,10 @@ const Dashboard = () => {
           .lte('start_time', weekEnd.toISOString())
           .eq('status', 'completed')
         if (isOrgAdmin) weekHoursQuery = weekHoursQuery.eq('organization_id', user.organizationId)
-        const { data: weekLessonsData } = await weekHoursQuery
+        const { data: weekLessonsData, error: e4 } = await weekHoursQuery
+        if (cancelled) return
+        if (e4) throw e4
+        console.log('Query 4/5 ok - week hours data:', weekLessonsData?.length)
 
         const weeklyHours = weekLessonsData?.reduce((total, lesson) => {
           return total + (lesson.duration_minutes || 0)
@@ -90,13 +110,16 @@ const Dashboard = () => {
           .gte('start_time', weekStart.toISOString())
           .lte('start_time', weekEnd.toISOString())
         if (isOrgAdmin) weekDetailsQuery = weekDetailsQuery.eq('organization_id', user.organizationId)
-        const { data: lessonsWithDetails } = await weekDetailsQuery.order('start_time', { ascending: true })
+        const { data: lessonsWithDetails, error: e5 } = await weekDetailsQuery.order('start_time', { ascending: true })
+        if (cancelled) return
+        if (e5) throw e5
+        console.log('Query 5/5 ok - week lessons:', lessonsWithDetails?.length)
 
-        // Korekta statusów - zmień confirmed/pending na in_progress jeśli lekcja się zaczęła
+        // Korekta statusów - zmień pending na in_progress jeśli lekcja się zaczęła
         // oraz na completed jeśli lekcja się zakończyła
         const now = new Date()
         for (const lesson of (lessonsWithDetails || [])) {
-          if (lesson.status === 'confirmed' || lesson.status === 'pending') {
+          if (lesson.status === 'pending') {
             const lessonStart = new Date(lesson.start_time)
             const lessonEnd = new Date(lesson.end_time)
             // Dane w bazie są TIMESTAMP WITHOUT TIME ZONE (czas lokalny)
@@ -118,7 +141,6 @@ const Dashboard = () => {
         const statusPriority = {
           'in_progress': 0,
           'pending': 1,
-          'confirmed': 1,
           'completed': 2,
           'cancelled': 3
         }
@@ -154,9 +176,10 @@ const Dashboard = () => {
         })
 
       } catch (error) {
-        console.error('Error fetching stats:', error)
+        if (!cancelled) console.error('Error fetching stats:', error)
       } finally {
-        setLoading(false)
+        clearTimeout(slowTimer)
+        if (!cancelled) setLoading(false)
       }
     }
 
@@ -172,9 +195,10 @@ const Dashboard = () => {
     window.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
+      cancelled = true
       window.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [user])
+  }, [user?.id])
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)
@@ -191,7 +215,6 @@ const Dashboard = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900/40 dark:text-yellow-300 dark:border-yellow-700'
-      case 'confirmed': return 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900/40 dark:text-green-300 dark:border-green-700'
       case 'in_progress': return 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700'
       case 'completed': return 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-900/40 dark:text-gray-300 dark:border-gray-700'
       case 'cancelled': return 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/40 dark:text-red-300 dark:border-red-700'
@@ -202,7 +225,6 @@ const Dashboard = () => {
   const getStatusLabel = (status) => {
     switch (status) {
       case 'pending': return 'Oczekuje'
-      case 'confirmed': return 'Potwierdzona'
       case 'in_progress': return 'W trakcie'
       case 'completed': return 'Zakończona'
       case 'cancelled': return 'Anulowana'
@@ -214,7 +236,6 @@ const Dashboard = () => {
     switch (status) {
       case 'in_progress': return 'bg-blue-100 dark:bg-blue-900/40'
       case 'pending': return 'bg-yellow-100 dark:bg-yellow-900/40'
-      case 'confirmed': return 'bg-yellow-100 dark:bg-yellow-900/40'
       case 'completed': return 'bg-green-100 dark:bg-green-900/40'
       case 'cancelled': return 'bg-red-100 dark:bg-red-900/40'
       default: return 'bg-gray-100 dark:bg-dark-200'

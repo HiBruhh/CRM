@@ -90,140 +90,130 @@ export const AuthProvider = ({ children }) => {
   }
 
   useEffect(() => {
-    let loadingResolved = false
+    let isMounted = true
 
-    const resolveLoading = () => {
-      if (!loadingResolved) {
-        loadingResolved = true
+    // Timeout bezpieczeństwa — jeśli wszystko zawiedzie, wyzeruj loading po 5s
+    const safetyTimeout = setTimeout(() => {
+      if (isMounted) {
+        console.warn('Auth safety timeout — forcing loading=false')
         setLoading(false)
       }
-    }
+    }, 5000)
 
-    // Timeout bezpieczeństwa - jeśli za 2s loading nie zostanie wyzerowany, wyzeruj go
-    const safetyTimeout = setTimeout(() => {
-      console.warn('Auth loading timeout - forcing loading=false')
-      resolveLoading()
-    }, 2000)
+    // initDone=true gdy inicjalizacja zakończy się — listener ignoruje eventy do tego czasu
+    let initDone = false
 
-    // Sprawdzamy sesję przy starcie
-    const checkSession = async () => {
+    // Pobierz bieżącą sesję przy starcie (Supabase 2.38.x nie emituje INITIAL_SESSION)
+    const initSession = async () => {
       try {
-        console.log('Checking initial session...')
-        const { data: { session }, error } = await supabase.auth.getSession()
-        if (error) throw error
-        console.log('Initial session found:', !!session)
-        
-        if (session) {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!isMounted) return
+        if (session?.user) {
           const userWithRole = await getUserWithRole(session.user)
-          setUser(userWithRole)
-          console.log('User restored from session:', userWithRole.email, 'role:', userWithRole.role)
+          if (isMounted) setUser(userWithRole)
         }
-      } catch (error) {
-        console.error('Session check error:', error)
-        setUser(null)
+      } catch (err) {
+        console.error('getSession error:', err)
       } finally {
-        resolveLoading()
+        initDone = true
+        if (isMounted) setLoading(false)
+        clearTimeout(safetyTimeout)
       }
     }
 
-    checkSession()
+    initSession()
 
-    // Nasłuchujemy zmiany stanu autoryzacji
+    // Synchronizacja między kartami — gdy inna karta zmieni token Supabase,
+    // ponownie wczytaj sesję. Event 'storage' nie odpala się w tej samej karcie.
+    const handleStorageChange = (e) => {
+      if (!isMounted || !initDone) return
+      if (e.key && e.key.includes('auth-token')) {
+        console.log('Cross-tab auth change detected, re-syncing session')
+        syncSession()
+      }
+    }
+
+    const syncSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!isMounted) return
+        if (session?.user) {
+          const userWithRole = await getUserWithRole(session.user)
+          if (isMounted) setUser(userWithRole)
+        } else {
+          if (isMounted) setUser(null)
+        }
+      } catch (err) {
+        console.error('Cross-tab sync error:', err)
+      }
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+
+    // Nasłuchuj zmian — tylko po zakończeniu inicjalizacji
+    // SIGNED_IN obsługuje login() bezpośrednio; TOKEN_REFRESHED nie zmienia tożsamości
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event, session ? 'has session' : 'no session')
-        
+        if (!isMounted || !initDone) return
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') return
+
         try {
-          if (session) {
+          if (session?.user) {
             const userWithRole = await getUserWithRole(session.user)
-            setUser(userWithRole)
-            console.log('User set from auth change:', userWithRole.email, 'role:', userWithRole.role)
+            if (isMounted) setUser(userWithRole)
           } else {
-            setUser(null)
-            console.log('User cleared from auth change')
+            if (isMounted) setUser(null)
           }
         } catch (error) {
           console.error('Auth state change error:', error)
-          setUser(null)
-        } finally {
-          resolveLoading()
+          if (isMounted) setUser(null)
         }
       }
     )
 
     return () => {
-      console.log('Cleaning up auth subscription')
+      isMounted = false
       clearTimeout(safetyTimeout)
+      window.removeEventListener('storage', handleStorageChange)
       subscription.unsubscribe()
     }
   }, [supabase])
 
   const login = async (email, password) => {
-    setLoading(true)
     console.log('Attempting login...')
 
-    const createTimeout = (ms, message) =>
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error(message)), ms)
-      )
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
-    try {
-      // Wyczyść ewentualną starą sesję, żeby uniknąć konfliktów z cookies/localStorage
-      try {
-        await supabase.auth.signOut({ scope: 'local' })
-      } catch (e) {
-        console.log('No previous session to clear')
-      }
-
-      // Logowanie z timeoutem 10s — jeśli Supabase nie odpowie, przerywamy
-      const { data, error } = await Promise.race([
-        supabase.auth.signInWithPassword({ email, password }),
-        createTimeout(10000, 'Logowanie trwa zbyt długo. Spróbuj ponownie.')
-      ])
-
-      if (error) {
-        console.error('Login error:', error)
-        throw error
-      }
-
-      if (!data?.user) {
-        throw new Error('Nie udało się pobrać danych użytkownika')
-      }
-
-      console.log('Login successful')
-      toast.success('Zalogowano pomyślnie!')
-
-      // Pobierz rolę użytkownika z timeoutem 5s
-      const userWithRole = await Promise.race([
-        getUserWithRole(data.user),
-        createTimeout(5000, 'Nie udało się pobrać uprawnień użytkownika.')
-      ])
-      setUser(userWithRole)
-      return userWithRole
-    } catch (error) {
-      console.error('Login catch error:', error)
-      // Wyczyść ewentualne pozostałości po nieudanym logowaniu
-      try {
-        await supabase.auth.signOut({ scope: 'local' })
-      } catch (e) {}
+    if (error) {
+      console.error('Login error:', error)
       toast.error(error.message || 'Błąd logowania')
       throw error
-    } finally {
-      setLoading(false)
     }
+
+    if (!data?.user) {
+      const err = new Error('Nie udało się pobrać danych użytkownika')
+      toast.error(err.message)
+      throw err
+    }
+
+    console.log('Login successful')
+    const userWithRole = await getUserWithRole(data.user)
+    setUser(userWithRole)
+    toast.success('Zalogowano pomyślnie!')
+    return userWithRole
   }
 
   const logout = async () => {
     try {
       console.log('Attempting logout...')
-      
       await supabase.auth.signOut()
       console.log('Logout successful')
       toast.success('Wylogowano pomyślnie!')
     } catch (error) {
       console.error('Logout error:', error)
+      setUser(null)
       toast.error(error.message || 'Błąd wylogowania')
-      setLoading(false)
     }
   }
 

@@ -706,7 +706,7 @@ const handleChange = (e) => {
               onChange={handleChange}
               options={[
                 { value: "pending", label: "Oczekująca" },
-                { value: "confirmed", label: "W trakcie" },
+                { value: "in_progress", label: "W trakcie" },
                 { value: "completed", label: "Zakończona" },
                 { value: "cancelled", label: "Odwołana" }
               ]}

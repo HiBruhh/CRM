@@ -481,14 +481,27 @@ const LessonForm = forwardRef(({ lesson, onSave, onCancel, onDurationChange }, r
     // Walidacja: kursant z <=10h wyjechanych nie może mieć jazdy dłuższej niż 2h
     if (formData.student_id) {
       const selectedStudent = students.find(s => s.id === formData.student_id)
-      if (selectedStudent && (selectedStudent.completed_hours || 0) <= 10 && formData.duration_minutes > 120) {
+      const completedHours = selectedStudent ? (selectedStudent.completed_hours || 0) : null
+
+      // Fallback: jeśli kursant nie jest w stanie lokalnym, pobierz godziny z bazy
+      const studentHours = completedHours !== null
+        ? completedHours
+        : await supabase
+            .from('students')
+            .select('completed_hours')
+            .eq('id', formData.student_id)
+            .single()
+            .then(({ data }) => data?.completed_hours || 0)
+            .catch(() => 0)
+
+      if (studentHours <= 10 && Number(formData.duration_minutes) > 120) {
         toast.error('Dla kursantów posiadających mniej niż 10 wyjeżdżonych godzin obowiązuje limit jazd do 2 godzin.')
         return
       }
     }
-    
+
     setErrors({})
-    
+
     try {
       setLoading(true)
       
@@ -758,7 +771,6 @@ const LessonForm = forwardRef(({ lesson, onSave, onCancel, onDurationChange }, r
               onChange={handleChange}
               options={[
                 { value: "pending", label: "Oczekująca" },
-                { value: "confirmed", label: "Potwierdzona" },
                 { value: "in_progress", label: "W trakcie" },
                 { value: "completed", label: "Zakończona" },
                 { value: "cancelled", label: "Odwołana" }

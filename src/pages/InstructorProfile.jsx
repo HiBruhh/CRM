@@ -17,7 +17,7 @@ const InstructorProfile = () => {
   const [instructor, setInstructor] = useState(null)
   const [students, setStudents] = useState([])
   const [lessons, setLessons] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -73,6 +73,7 @@ const InstructorProfile = () => {
   }, [instructorId])
 
   const fetchInstructor = async () => {
+    setLoading(true)
     try {
       const { data, error } = await supabase
         .from('instructors')
@@ -164,7 +165,6 @@ const InstructorProfile = () => {
   const getLessonStatusColor = (status) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800'
-      case 'confirmed': return 'bg-blue-100 text-blue-800'
       case 'in_progress': return 'bg-green-100 text-green-800'
       case 'completed': return 'bg-gray-100 text-gray-800'
       case 'cancelled': return 'bg-red-100 text-red-800'
@@ -175,7 +175,6 @@ const InstructorProfile = () => {
   const getLessonStatusText = (status) => {
     switch (status) {
       case 'pending': return 'Oczekuje'
-      case 'confirmed': return 'Potwierdzona'
       case 'in_progress': return 'W trakcie'
       case 'completed': return 'Zakończona'
       case 'cancelled': return 'Anulowana'
@@ -381,7 +380,7 @@ const InstructorProfile = () => {
         const { error: deleteError } = await supabase
           .from('driving_lessons')
           .delete()
-          .in('status', ['pending', 'confirmed'])
+          .in('status', ['pending'])
           .in('student_id', studentIds)
 
         if (deleteError) {

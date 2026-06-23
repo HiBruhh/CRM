@@ -21,7 +21,7 @@ const Schedule = () => {
   const navigate = useNavigate()
   const [events, setEvents] = useState([])
   const [resources, setResources] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [selectedLesson, setSelectedLesson] = useState(null)
   const [lastSelection, setLastSelection] = useState(null)
   const [calendarKey, setCalendarKey] = useState(0)
@@ -53,6 +53,7 @@ const Schedule = () => {
   const [selectedLessonForChecklist, setSelectedLessonForChecklist] = useState(null)
 
   useEffect(() => {
+    if (!user?.id) return
     fetchSchedule()
     fetchResources()
     
@@ -89,7 +90,7 @@ const Schedule = () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [user, selectedLesson])
+  }, [user?.id, selectedLesson])
 
   const fetchResources = async () => {
     try {
@@ -122,6 +123,7 @@ const Schedule = () => {
 
 
   const fetchSchedule = async () => {
+    setLoading(true)
     try {
       let query = supabase
         .from('driving_lessons')
@@ -180,7 +182,7 @@ const Schedule = () => {
         let title = ''
         if (lesson.status === 'pending') {
           title = `${instructorIcon} ${shortInstructorName}\n${studentIcon} ${shortStudentName}`
-        } else if (lesson.status === 'in_progress' || lesson.status === 'confirmed') {
+        } else if (lesson.status === 'in_progress') {
           title = `🚗 ${shortInstructorName} + ${shortStudentName}`
         } else if (lesson.status === 'completed') {
           title = `✅ ${shortInstructorName} + ${shortStudentName}`
@@ -235,7 +237,6 @@ const Schedule = () => {
     switch (status) {
       case 'pending': return '#f59e0b'
       case 'in_progress': return '#3b82f6'
-      case 'confirmed': return '#3b82f6'
       case 'completed': return '#10b981'
       case 'cancelled': return '#ef4444'
       default: return '#6b7280'

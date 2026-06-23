@@ -12,7 +12,7 @@ const Settings = () => {
   const { theme, setTheme } = useTheme()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('general')
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   
   const [notificationSettings, setNotificationSettings] = useState({
@@ -79,10 +79,12 @@ const Settings = () => {
   ]
 
   useEffect(() => {
+    if (!user?.id) return
     fetchNotificationSettings()
-  }, [user])
+  }, [user?.id])
 
   const fetchNotificationSettings = async () => {
+    setLoading(true)
     try {
       const { data, error } = await supabase
         .from('user_notification_settings')

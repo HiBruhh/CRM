@@ -11,7 +11,7 @@ const Instructors = () => {
   const navigate = useNavigate()
   const [instructors, setInstructors] = useState([])
   const [groupedInstructors, setGroupedInstructors] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -31,11 +31,13 @@ const Instructors = () => {
   const [organizations, setOrganizations] = useState([])
 
   useEffect(() => {
+    if (!user?.id) return
     fetchInstructors()
     if (user?.isSuperAdmin) fetchOrganizations()
-  }, [user])
+  }, [user?.id])
 
   const fetchInstructors = async () => {
+    setLoading(true)
     try {
       const { data: instructorsData, error } = await supabase
         .from('instructors')

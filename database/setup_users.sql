@@ -31,14 +31,14 @@ ON CONFLICT (student_id) DO NOTHING;
 INSERT INTO driving_lessons (student_id, instructor_id, start_time, end_time, duration_minutes, status, location, notes) VALUES
 -- Jazdy dla Jana Kowalskiego
 ((SELECT id FROM students WHERE student_id = 'KURS-0001'), (SELECT id FROM instructors WHERE email = 'instructor@szkola.pl'), 
- '2024-05-14 09:00:00', '2024-05-14 10:00:00', 60, 'confirmed', 'Plac manewrowy', 'Pierwsza jazda - podstawy'),
+ '2024-05-14 09:00:00', '2024-05-14 10:00:00', 60, 'in_progress', 'Plac manewrowy', 'Pierwsza jazda - podstawy'),
 ((SELECT id FROM students WHERE student_id = 'KURS-0001'), (SELECT id FROM instructors WHERE email = 'instructor@szkola.pl'), 
- '2024-05-15 11:00:00', '2024-05-15 12:30:00', 90, 'confirmed', 'Miasto', 'Jazda po mieście'),
+ '2024-05-15 11:00:00', '2024-05-15 12:30:00', 90, 'in_progress', 'Miasto', 'Jazda po mieście'),
 -- Jazdy dla Anny Nowak
 ((SELECT id FROM students WHERE student_id = 'KURS-0002'), (SELECT id FROM instructors WHERE email = 'instructor@szkola.pl'), 
  '2024-05-14 14:00:00', '2024-05-14 15:00:00', 60, 'pending', 'Plac manewrowy', 'Pierwsza jazda'),
 ((SELECT id FROM students WHERE student_id = 'KURS-0002'), (SELECT id FROM instructors WHERE email = 'instructor@szkola.pl'), 
- '2024-05-16 10:00:00', '2024-05-16 11:00:00', 60, 'confirmed', 'Miasto', 'Powtórka'),
+ '2024-05-16 10:00:00', '2024-05-16 11:00:00', 60, 'in_progress', 'Miasto', 'Powtórka'),
 -- Jazdy dla Piotra Wiśniewskiego
 ((SELECT id FROM students WHERE student_id = 'KURS-0003'), (SELECT id FROM instructors WHERE email = 'instructor@szkola.pl'), 
  '2024-05-14 16:00:00', '2024-05-14 17:00:00', 60, 'completed', 'Trasa eksterna', 'Jazda zakończona sukcesem')
