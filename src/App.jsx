@@ -14,6 +14,9 @@ import InstructorProfile from './pages/InstructorProfile'
 import StudentProfile from './pages/StudentProfile'
 import Settings from './pages/Settings'
 import Organizations from './pages/Organizations'
+import Fleet from './pages/Fleet'
+import VehicleDetail from './pages/VehicleDetail'
+import FuelReport from './pages/FuelReport'
 import ProtectedRoute from './components/ProtectedRoute'
 import LoadingSpinner from './components/LoadingSpinner'
 import Navbar from './components/Navbar'
@@ -143,6 +146,30 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <Organizations />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/fleet" 
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <Fleet />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/vehicles/:vehicleId" 
+          element={
+            <ProtectedRoute>
+              <VehicleDetail />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/fuel-report" 
+          element={
+            <ProtectedRoute requiredRole="instructor">
+              <FuelReport />
             </ProtectedRoute>
           } 
         />

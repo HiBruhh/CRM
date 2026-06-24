@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useSupabase } from '../contexts/SupabaseContext'
 import ThemeToggle from '../components/ThemeToggle'
-import { LogOut, LayoutDashboard, Calendar, Users, UserCog, Home, Shield, User, ChevronDown, Settings, Bell, Building2 } from 'lucide-react'
+import { LogOut, LayoutDashboard, Calendar, Users, UserCog, Home, Shield, User, ChevronDown, Settings, Bell, Building2, Car, Fuel } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const Navbar = () => {
@@ -107,6 +107,8 @@ const Navbar = () => {
     { path: '/schedule', label: 'Grafik', icon: Calendar, adminOnly: false },
     { path: '/students', label: 'Kursanci', icon: Users, adminOnly: false },
     { path: '/instructors', label: 'Instruktorzy', icon: UserCog, adminOnly: true },
+    { path: '/fleet', label: 'Moja Flota', icon: Car, adminOnly: true },
+    { path: '/fuel-report', label: 'Raport Paliwa', icon: Fuel, instructorOnly: true },
     { path: '/organizations', label: 'Organizacje', icon: Building2, superAdminOnly: true },
   ]
 
