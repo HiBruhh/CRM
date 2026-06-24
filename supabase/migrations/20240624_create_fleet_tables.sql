@@ -80,17 +80,13 @@ CREATE POLICY org_admin_vehicles_all ON vehicles
         organization_id IN (
             SELECT organization_id FROM organization_admins WHERE auth_id::uuid = auth.uid()
         )
-        OR auth.uid() IN (
-            SELECT id FROM auth.users WHERE raw_user_meta_data->>'role' = 'super_admin'
-        )
+        OR is_super_admin()
     )
     WITH CHECK (
         organization_id IN (
             SELECT organization_id FROM organization_admins WHERE auth_id::uuid = auth.uid()
         )
-        OR auth.uid() IN (
-            SELECT id FROM auth.users WHERE raw_user_meta_data->>'role' = 'super_admin'
-        )
+        OR is_super_admin()
     );
 
 -- Instruktor: SELECT vehicles in own organization (needed to add fuel reports)
@@ -114,17 +110,13 @@ CREATE POLICY org_admin_fuel_reports_all ON fuel_reports
         organization_id IN (
             SELECT organization_id FROM organization_admins WHERE auth_id::uuid = auth.uid()
         )
-        OR auth.uid() IN (
-            SELECT id FROM auth.users WHERE raw_user_meta_data->>'role' = 'super_admin'
-        )
+        OR is_super_admin()
     )
     WITH CHECK (
         organization_id IN (
             SELECT organization_id FROM organization_admins WHERE auth_id::uuid = auth.uid()
         )
-        OR auth.uid() IN (
-            SELECT id FROM auth.users WHERE raw_user_meta_data->>'role' = 'super_admin'
-        )
+        OR is_super_admin()
     );
 
 -- Instruktor: INSERT fuel reports for own organization

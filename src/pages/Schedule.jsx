@@ -60,10 +60,10 @@ const Schedule = () => {
     // Zablokuj scrollbar całej strony tylko dla Schedule
     document.body.style.overflow = 'hidden'
 
-    // Automatyczne odświeżanie kalendarza co 15 sekund
+    // Automatyczne odświeżanie kalendarza co 2 minuty
     intervalRef.current = setInterval(() => {
       fetchSchedule()
-    }, 15000)
+    }, 120000)
 
     // Odśwież dane gdy użytkownik wróci na stronę (focus)
     const handleVisibilityChange = () => {
@@ -380,7 +380,7 @@ const Schedule = () => {
     requestAnimationFrame(animateSelection)
   }
 
-  const isAdmin = user?.role === 'admin'
+  const isAdmin = user?.role === 'admin' || user?.role === 'org_admin' || user?.role === 'super_admin'
 
   // Zoom functionality - zmiana slotDuration (rozmiar elementów)
   useEffect(() => {
@@ -608,11 +608,11 @@ const Schedule = () => {
                   key={calendarKey}
                   ref={calendarRef}
                   plugins={[dayGridPlugin, timeGridPlugin, resourceTimelinePlugin, interactionPlugin]}
-                  initialView={currentView || (user?.role === 'admin' ? 'resourceTimelineDay' : 'timeGridWeek')}
+                  initialView={currentView || (isAdmin ? 'resourceTimelineDay' : 'timeGridWeek')}
                   headerToolbar={{
                     left: 'prev,next today',
                     center: 'title',
-                    right: user?.role === 'admin' ? 'resourceTimelineDay,timeGridWeek,dayGridMonth' : 'timeGridWeek,dayGridMonth'
+                    right: isAdmin ? 'resourceTimelineDay,timeGridWeek,dayGridMonth' : 'timeGridWeek,dayGridMonth'
                   }}
                   locale={plLocale}
                   events={events}

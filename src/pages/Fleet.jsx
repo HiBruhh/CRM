@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useSupabase } from '../contexts/SupabaseContext'
 import {
   fetchVehicles,
+  fetchAllVehicles,
   createVehicle,
   updateVehicle,
   deleteVehicle,
   fetchFuelCostSummary,
+  fetchFuelCostSummaryAll,
   parseVehicleDocument,
   getVehicleAlert,
   getVehicleAlertText
@@ -25,7 +28,8 @@ import {
   Fuel,
   Camera,
   Search,
-  AlertCircle
+  AlertCircle,
+  Building2
 } from 'lucide-react'
 
 const emptyVehicle = {
@@ -48,8 +52,118 @@ const transmissions = ['manual', 'automat']
 const categories = ['AM', 'A', 'A1', 'A2', 'B', 'B+E', 'C', 'C+E', 'D', 'D+E']
 const statuses = ['active', 'inactive', 'service']
 
+const formatCurrency = (value) => {
+  return new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(value || 0)
+}
+
+const VehicleCard = ({ vehicle, fuelCost, onClick, onEdit, onDelete }) => {
+  const alert = getVehicleAlert(vehicle)
+  const alertText = getVehicleAlertText(vehicle)
+
+  return (
+    <div
+      key={vehicle.id}
+      data-alert={alert || undefined}
+      onClick={onClick}
+      className={`bg-white dark:bg-dark-100 rounded-xl border overflow-hidden transition-shadow hover:shadow-md cursor-pointer ${
+        alert === 'danger'
+          ? 'border-red-300 dark:border-red-700'
+          : alert === 'warning'
+            ? 'border-yellow-300 dark:border-yellow-700'
+            : 'border-gray-200 dark:border-dark-200'
+      }`}
+    >
+      <div className="p-5">
+        <div className="flex justify-between items-start mb-3">
+          <div className="flex items-center gap-3">
+            <div className={`p-2 rounded-lg ${
+              alert === 'danger'
+                ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                : alert === 'warning'
+                  ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                  : 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400'
+            }`}>
+              <Car className="h-6 w-6" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-dark-900">
+                {vehicle.brand} {vehicle.model}
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-dark-500">{vehicle.registration_plate}</p>
+            </div>
+          </div>
+          <div className="flex gap-1">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onEdit(vehicle)
+              }}
+              className="p-2 text-gray-400 hover:text-primary-600 hover:bg-gray-100 dark:hover:bg-dark-200 rounded-lg transition-colors"
+            >
+              <Edit className="h-4 w-4" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onDelete(vehicle.id)
+              }}
+              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        {alert && (
+          <div className={`flex items-start gap-2 p-3 rounded-lg mb-4 text-sm ${
+            alert === 'danger'
+              ? 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+              : 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400'
+          }`}>
+            <AlertTriangle className="h-5 w-5 flex-shrink-0" />
+            <span>{alertText}</span>
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-3 text-sm mb-4">
+          <div className="bg-gray-50 dark:bg-dark-200/50 p-3 rounded-lg">
+            <p className="text-gray-500 dark:text-dark-500">Rok produkcji</p>
+            <p className="font-medium text-gray-900 dark:text-dark-900">{vehicle.production_year || '-'}</p>
+          </div>
+          <div className="bg-gray-50 dark:bg-dark-200/50 p-3 rounded-lg">
+            <p className="text-gray-500 dark:text-dark-500">Kategoria</p>
+            <p className="font-medium text-gray-900 dark:text-dark-900">{vehicle.license_category || '-'}</p>
+          </div>
+          <div className="bg-gray-50 dark:bg-dark-200/50 p-3 rounded-lg">
+            <p className="text-gray-500 dark:text-dark-500">Paliwo / Skrzynia</p>
+            <p className="font-medium text-gray-900 dark:text-dark-900 capitalize">{vehicle.fuel_type || '-'} / {vehicle.transmission || '-'}</p>
+          </div>
+          <div className="bg-gray-50 dark:bg-dark-200/50 p-3 rounded-lg">
+            <p className="text-gray-500 dark:text-dark-500">Status</p>
+            <p className="font-medium text-gray-900 dark:text-dark-900">
+              {vehicle.status === 'active' ? 'Aktywny' : vehicle.status === 'service' ? 'Serwis' : 'Nieaktywny'}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-dark-200">
+          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-dark-600">
+            <Fuel className="h-4 w-4" />
+            <span>Koszt paliwa:</span>
+            <span className="font-semibold text-gray-900 dark:text-dark-900">{formatCurrency(fuelCost)}</span>
+          </div>
+          {vehicle.vin && (
+            <span className="text-xs text-gray-400 dark:text-dark-500 font-mono">VIN: {vehicle.vin}</span>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const Fleet = () => {
   const { user } = useAuth()
+  const supabase = useSupabase()
   const navigate = useNavigate()
   const fileInputRef = useRef(null)
 
@@ -67,25 +181,51 @@ const Fleet = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleteId, setDeleteId] = useState(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [organizations, setOrganizations] = useState([])
+  const [selectedOrg, setSelectedOrg] = useState('')
 
   const organizationId = user?.organizationId
-  const isBoss = user?.role === 'org_admin' || user?.isSuperAdmin || user?.role === 'admin'
+  const isBoss = user?.role === 'org_admin' || user?.isSuperAdmin || user?.role === 'super_admin'
 
   useEffect(() => {
+    if (user?.isSuperAdmin && organizations.length === 0) {
+      fetchOrganizations()
+    }
     loadData()
-  }, [organizationId])
+  }, [organizationId, user?.isSuperAdmin])
+
+  const fetchOrganizations = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('id, name, slug')
+        .order('name', { ascending: true })
+      if (error) throw error
+      setOrganizations(data || [])
+    } catch (error) {
+      console.error('Błąd ładowania organizacji:', error)
+    }
+  }
 
   const loadData = async () => {
-    if (!organizationId) {
-      setLoading(false)
-      return
-    }
     try {
       setLoading(true)
-      const [vehicleList, costSummary] = await Promise.all([
-        fetchVehicles(organizationId),
-        fetchFuelCostSummary(organizationId)
-      ])
+      let vehicleList, costSummary
+      if (user?.isSuperAdmin) {
+        [vehicleList, costSummary] = await Promise.all([
+          fetchAllVehicles(),
+          fetchFuelCostSummaryAll()
+        ])
+      } else {
+        if (!organizationId) {
+          setLoading(false)
+          return
+        }
+        [vehicleList, costSummary] = await Promise.all([
+          fetchVehicles(organizationId),
+          fetchFuelCostSummary(organizationId)
+        ])
+      }
       setVehicles(vehicleList)
       setFuelCosts(costSummary)
     } catch (error) {
@@ -98,13 +238,18 @@ const Fleet = () => {
 
   const handleOpenAdd = () => {
     setEditingId(null)
-    setFormData({ ...emptyVehicle, organization_id: organizationId })
+    if (user?.isSuperAdmin && organizations.length === 0) fetchOrganizations()
+    setFormData({
+      ...emptyVehicle,
+      organization_id: user?.isSuperAdmin ? '' : organizationId
+    })
     setFormErrors({})
     setShowModal(true)
   }
 
   const handleOpenEdit = (vehicle) => {
     setEditingId(vehicle.id)
+    if (user?.isSuperAdmin && organizations.length === 0) fetchOrganizations()
     setFormData({
       brand: vehicle.brand || '',
       model: vehicle.model || '',
@@ -117,7 +262,8 @@ const Fleet = () => {
       license_category: vehicle.license_category || 'B',
       status: vehicle.status || 'active',
       insurance_expiry: vehicle.insurance_expiry || '',
-      inspection_expiry: vehicle.inspection_expiry || ''
+      inspection_expiry: vehicle.inspection_expiry || '',
+      organization_id: vehicle.organization_id || ''
     })
     setFormErrors({})
     setShowModal(true)
@@ -136,6 +282,9 @@ const Fleet = () => {
     if (formData.production_year && (formData.production_year < 1900 || formData.production_year > 2100)) {
       errors.production_year = 'Niepoprawny rok'
     }
+    if (user?.isSuperAdmin && !formData.organization_id) {
+      errors.organization_id = 'Wybierz organizację'
+    }
     setFormErrors(errors)
     return Object.keys(errors).length === 0
   }
@@ -146,7 +295,7 @@ const Fleet = () => {
     try {
       const payload = {
         ...formData,
-        organization_id: organizationId,
+        organization_id: user?.isSuperAdmin ? formData.organization_id : organizationId,
         production_year: formData.production_year ? Number(formData.production_year) : null,
         insurance_expiry: formData.insurance_expiry || null,
         inspection_expiry: formData.inspection_expiry || null
@@ -246,17 +395,28 @@ const Fleet = () => {
 
   const filteredVehicles = vehicles.filter(v => {
     const term = search.toLowerCase()
-    return (
+    const matchesSearch = (
       v.brand?.toLowerCase().includes(term) ||
       v.model?.toLowerCase().includes(term) ||
       v.registration_plate?.toLowerCase().includes(term) ||
       v.vin?.toLowerCase().includes(term)
     )
+    if (!matchesSearch) return false
+    if (user?.isSuperAdmin && selectedOrg) {
+      return v.organization_id === selectedOrg
+    }
+    return true
   })
 
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(value || 0)
-  }
+  const groupedVehicles = user?.isSuperAdmin
+    ? filteredVehicles.reduce((acc, v) => {
+        const orgId = v.organization_id || 'no-org'
+        const orgName = v.organization?.name || 'Brak organizacji'
+        if (!acc[orgId]) acc[orgId] = { name: orgName, vehicles: [] }
+        acc[orgId].vehicles.push(v)
+        return acc
+      }, {})
+    : null
 
   if (loading) return <LoadingSpinner text="Ładowanie floty..." />
 
@@ -276,8 +436,12 @@ const Fleet = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-dark-900">Moja Flota</h1>
-            <p className="text-sm text-gray-500 dark:text-dark-500">Zarządzaj pojazdami, ubezpieczeniami i kosztami paliwa</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-dark-900">
+              {user?.isSuperAdmin ? 'Flota - wszystkie organizacje' : 'Moja Flota'}
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-dark-500">
+              {user?.isSuperAdmin ? 'Podgląd pojazdów we wszystkich organizacjach' : 'Zarządzaj pojazdami, ubezpieczeniami i kosztami paliwa'}
+            </p>
           </div>
           <button
             onClick={handleOpenAdd}
@@ -288,16 +452,33 @@ const Fleet = () => {
           </button>
         </div>
 
-        {/* Search */}
-        <div className="relative mb-6">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Szukaj po marce, modelu, numerze rejestracyjnym lub VIN..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-100 text-gray-900 dark:text-dark-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          />
+        {/* Search & organization filter */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Szukaj po marce, modelu, numerze rejestracyjnym lub VIN..."
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-100 text-gray-900 dark:text-dark-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            />
+          </div>
+          {user?.isSuperAdmin && (
+            <div className="flex items-center gap-2 sm:w-72">
+              <Building2 className="h-5 w-5 text-gray-400 flex-shrink-0" />
+              <select
+                value={selectedOrg}
+                onChange={(e) => setSelectedOrg(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-100 text-gray-900 dark:text-dark-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              >
+                <option value="">Wszystkie organizacje</option>
+                {organizations.map((org) => (
+                  <option key={org.id} value={org.id}>{org.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         {/* Vehicles grid */}
@@ -314,113 +495,42 @@ const Fleet = () => {
               Dodaj pojazd
             </button>
           </div>
+        ) : user?.isSuperAdmin ? (
+          <div className="space-y-10">
+            {Object.entries(groupedVehicles).map(([orgId, group]) => (
+              <div key={orgId}>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-dark-900 mb-4 flex items-center">
+                  <Building2 className="h-5 w-5 mr-2 text-gray-400" />
+                  {group.name}
+                  <span className="ml-2 text-sm font-normal text-gray-500 dark:text-dark-500">({group.vehicles.length})</span>
+                </h2>
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {group.vehicles.map(vehicle => (
+                    <VehicleCard
+                      key={vehicle.id}
+                      vehicle={vehicle}
+                      fuelCost={fuelCosts[vehicle.id] || 0}
+                      onClick={() => navigate(`/vehicles/${vehicle.id}`)}
+                      onEdit={handleOpenEdit}
+                      onDelete={handleDelete}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filteredVehicles.map(vehicle => {
-              const alert = getVehicleAlert(vehicle)
-              const alertText = getVehicleAlertText(vehicle)
-              const fuelCost = fuelCosts[vehicle.id] || 0
-
-              return (
-                <div
-                  key={vehicle.id}
-                  data-alert={alert || undefined}
-                  onClick={() => navigate(`/vehicles/${vehicle.id}`)}
-                  className={`bg-white dark:bg-dark-100 rounded-xl border overflow-hidden transition-shadow hover:shadow-md cursor-pointer ${
-                    alert === 'danger'
-                      ? 'border-red-300 dark:border-red-700'
-                      : alert === 'warning'
-                        ? 'border-yellow-300 dark:border-yellow-700'
-                        : 'border-gray-200 dark:border-dark-200'
-                  }`}
-                >
-                  <div className="p-5">
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${
-                          alert === 'danger'
-                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                            : alert === 'warning'
-                              ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                              : 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400'
-                        }`}>
-                          <Car className="h-6 w-6" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900 dark:text-dark-900">
-                            {vehicle.brand} {vehicle.model}
-                          </h3>
-                          <p className="text-sm text-gray-500 dark:text-dark-500">{vehicle.registration_plate}</p>
-                        </div>
-                      </div>
-                      <div className="flex gap-1">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleOpenEdit(vehicle)
-                          }}
-                          className="p-2 text-gray-400 hover:text-primary-600 hover:bg-gray-100 dark:hover:bg-dark-200 rounded-lg transition-colors"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleDelete(vehicle.id)
-                          }}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {alert && (
-                      <div className={`flex items-start gap-2 p-3 rounded-lg mb-4 text-sm ${
-                        alert === 'danger'
-                          ? 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
-                          : 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400'
-                      }`}>
-                        <AlertTriangle className="h-5 w-5 flex-shrink-0" />
-                        <span>{alertText}</span>
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-3 text-sm mb-4">
-                      <div className="bg-gray-50 dark:bg-dark-200/50 p-3 rounded-lg">
-                        <p className="text-gray-500 dark:text-dark-500">Rok produkcji</p>
-                        <p className="font-medium text-gray-900 dark:text-dark-900">{vehicle.production_year || '-'}</p>
-                      </div>
-                      <div className="bg-gray-50 dark:bg-dark-200/50 p-3 rounded-lg">
-                        <p className="text-gray-500 dark:text-dark-500">Kategoria</p>
-                        <p className="font-medium text-gray-900 dark:text-dark-900">{vehicle.license_category || '-'}</p>
-                      </div>
-                      <div className="bg-gray-50 dark:bg-dark-200/50 p-3 rounded-lg">
-                        <p className="text-gray-500 dark:text-dark-500">Paliwo / Skrzynia</p>
-                        <p className="font-medium text-gray-900 dark:text-dark-900 capitalize">{vehicle.fuel_type || '-'} / {vehicle.transmission || '-'}</p>
-                      </div>
-                      <div className="bg-gray-50 dark:bg-dark-200/50 p-3 rounded-lg">
-                        <p className="text-gray-500 dark:text-dark-500">Status</p>
-                        <p className="font-medium text-gray-900 dark:text-dark-900">
-                          {vehicle.status === 'active' ? 'Aktywny' : vehicle.status === 'service' ? 'Serwis' : 'Nieaktywny'}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-dark-200">
-                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-dark-600">
-                        <Fuel className="h-4 w-4" />
-                        <span>Koszt paliwa:</span>
-                        <span className="font-semibold text-gray-900 dark:text-dark-900">{formatCurrency(fuelCost)}</span>
-                      </div>
-                      {vehicle.vin && (
-                        <span className="text-xs text-gray-400 dark:text-dark-500 font-mono">VIN: {vehicle.vin}</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
+            {filteredVehicles.map(vehicle => (
+              <VehicleCard
+                key={vehicle.id}
+                vehicle={vehicle}
+                fuelCost={fuelCosts[vehicle.id] || 0}
+                onClick={() => navigate(`/vehicles/${vehicle.id}`)}
+                onEdit={handleOpenEdit}
+                onDelete={handleDelete}
+              />
+            ))}
           </div>
         )}
       </main>
@@ -489,6 +599,22 @@ const Fleet = () => {
               )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {user?.isSuperAdmin && (
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-dark-900 mb-1">Organizacja *</label>
+                    <select
+                      value={formData.organization_id || ''}
+                      onChange={(e) => setFormData({ ...formData, organization_id: e.target.value })}
+                      className={`w-full px-3 py-2 border rounded-lg dark:bg-dark-200 dark:text-dark-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${formErrors.organization_id ? 'border-red-500' : 'border-gray-300 dark:border-dark-300'}`}
+                    >
+                      <option value="">Wybierz organizację</option>
+                      {organizations.map((org) => (
+                        <option key={org.id} value={org.id}>{org.name}</option>
+                      ))}
+                    </select>
+                    {formErrors.organization_id && <p className="text-xs text-red-500 mt-1">{formErrors.organization_id}</p>}
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-dark-900 mb-1">Marka *</label>
                   <input

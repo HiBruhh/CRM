@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import {
   fetchVehicles,
@@ -37,6 +37,7 @@ const FuelReport = () => {
   const [currentMileage, setCurrentMileage] = useState('')
   const [fuels, setFuels] = useState([])
   const [grandTotal, setGrandTotal] = useState(0)
+  const [vatRate, setVatRate] = useState(23)
   const [previewImage, setPreviewImage] = useState(null)
 
   const organizationId = user?.organizationId
@@ -178,6 +179,15 @@ const FuelReport = () => {
     return true
   }
 
+  const vatAmount = useMemo(() => {
+    const net = grandTotal / (1 + vatRate / 100)
+    return Number((grandTotal - net).toFixed(2))
+  }, [grandTotal, vatRate])
+
+  const netAmount = useMemo(() => {
+    return Number((grandTotal / (1 + vatRate / 100)).toFixed(2))
+  }, [grandTotal, vatRate])
+
   const handleSubmit = async () => {
     if (!validate()) return
     setIsSaving(true)
@@ -195,9 +205,14 @@ const FuelReport = () => {
           total_price
         })),
         total_cost: grandTotal,
+        vat_rate: vatRate,
+        vat_amount: vatAmount,
+        net_amount: netAmount,
         current_mileage: currentMileage ? Number(currentMileage) : null
       }
-      await createFuelReport(payload)
+      console.log('Fuel report payload:', payload)
+      const saved = await createFuelReport(payload)
+      console.log('Fuel report saved:', saved)
       toast.success('Raport paliwa zapisany')
       navigate('/instructor-panel')
     } catch (error) {
@@ -400,6 +415,8 @@ const FuelReport = () => {
                 <Gauge className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
                   type="number"
+                  min="0"
+                  step="1"
                   value={currentMileage}
                   onChange={(e) => setCurrentMileage(e.target.value)}
                   placeholder="np. 123456"
@@ -409,14 +426,41 @@ const FuelReport = () => {
             </div>
 
             {/* Summary */}
-            <div className="p-4 bg-primary-50 dark:bg-primary-900/10 rounded-xl border border-primary-200 dark:border-primary-800">
+            <div className="p-4 bg-primary-50 dark:bg-primary-900/10 rounded-xl border border-primary-200 dark:border-primary-800 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-700 dark:text-dark-900">Łączny koszt paliwa:</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-dark-900">Stawka VAT:</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={vatRate}
+                    onChange={(e) => setVatRate(Number(e.target.value))}
+                    className="w-20 px-2 py-1 border border-primary-300 dark:border-primary-700 rounded-lg dark:bg-dark-200 dark:text-dark-900 text-sm text-right"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-dark-900">%</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-700 dark:text-dark-900">Wartość netto:</span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-dark-900">
+                  {new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(netAmount)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-700 dark:text-dark-900">Kwota VAT:</span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-dark-900">
+                  {new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(vatAmount)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between border-t border-primary-200 dark:border-primary-800 pt-3">
+                <span className="text-sm font-medium text-gray-700 dark:text-dark-900">Łączny koszt brutto:</span>
                 <span className="text-xl font-bold text-primary-700 dark:text-primary-400">
                   {new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(grandTotal)}
                 </span>
               </div>
-              <p className="text-xs text-gray-500 dark:text-dark-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-dark-500">
                 Przed zapisem sprawdź czy wykryte pozycje są poprawne. Możesz je edytować powyżej.
               </p>
             </div>

@@ -21,11 +21,12 @@ const Organizations = () => {
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
+    logo_url: '',
     primary_color: '#4F46E5',
     max_instructors: 5,
     max_students: 100,
     subscription_plan: 'basic',
-    
+
     // Admin data
     admin_first_name: '',
     admin_last_name: '',
@@ -37,6 +38,7 @@ const Organizations = () => {
   const [editData, setEditData] = useState({
     name: '',
     slug: '',
+    logo_url: '',
     primary_color: '#4F46E5',
     max_instructors: 5,
     max_students: 100,
@@ -158,6 +160,7 @@ const Organizations = () => {
         .insert({
           name: formData.name,
           slug: formData.slug,
+          logo_url: formData.logo_url || null,
           primary_color: formData.primary_color,
           max_instructors: formData.max_instructors,
           max_students: formData.max_students,
@@ -215,6 +218,7 @@ const Organizations = () => {
       setFormData({
         name: '',
         slug: '',
+        logo_url: '',
         primary_color: '#4F46E5',
         max_instructors: 5,
         max_students: 100,
@@ -251,6 +255,7 @@ const Organizations = () => {
     setEditData({
       name: org.name,
       slug: org.slug,
+      logo_url: org.logo_url || '',
       primary_color: org.primary_color || '#4F46E5',
       max_instructors: org.max_instructors,
       max_students: org.max_students,
@@ -359,6 +364,7 @@ const Organizations = () => {
         .update({
           name: editData.name,
           slug: editData.slug,
+          logo_url: editData.logo_url || null,
           primary_color: editData.primary_color,
           max_instructors: editData.max_instructors,
           max_students: editData.max_students,
@@ -451,11 +457,15 @@ const Organizations = () => {
               <div className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-3">
-                    <div 
-                      className="w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
-                      style={{ backgroundColor: org.primary_color + '15' }}
+                    <div
+                      className="w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 overflow-hidden border border-gray-200 dark:border-dark-200"
+                      style={{ backgroundColor: org.logo_url ? 'transparent' : org.primary_color + '15' }}
                     >
-                      <Building2 className="h-6 w-6" style={{ color: org.primary_color }} />
+                      {org.logo_url ? (
+                        <img src={org.logo_url} alt={org.name} className="h-full w-full object-contain p-1" />
+                      ) : (
+                        <Building2 className="h-6 w-6" style={{ color: org.primary_color }} />
+                      )}
                     </div>
                     <div>
                       <h3 className="font-semibold text-gray-900 dark:text-dark-900">{org.name}</h3>
@@ -582,6 +592,22 @@ const Organizations = () => {
                     onChange={(e) => setEditData(prev => ({ ...prev, slug: e.target.value }))}
                     className="w-full px-4 py-2.5 border border-gray-200 dark:border-dark-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-dark-200 dark:text-dark-900 transition-colors"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-700 mb-1.5">Logo (URL)</label>
+                  <input
+                    type="url"
+                    value={editData.logo_url}
+                    onChange={(e) => setEditData(prev => ({ ...prev, logo_url: e.target.value }))}
+                    className="w-full px-4 py-2.5 border border-gray-200 dark:border-dark-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-dark-200 dark:text-dark-900 transition-colors"
+                    placeholder="https://example.com/logo.png"
+                  />
+                  <p className="mt-1.5 text-xs text-gray-400 dark:text-dark-600">Podaj bezpośredni link do pliku graficznego.</p>
+                  {editData.logo_url && (
+                    <div className="mt-2 p-2 border border-gray-200 dark:border-dark-300 rounded-lg inline-block">
+                      <img src={editData.logo_url} alt="Podgląd logo" className="h-10 w-auto object-contain" />
+                    </div>
+                  )}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -977,6 +1003,22 @@ const Organizations = () => {
                     />
                     {formData.slug && (
                       <p className="mt-1.5 text-xs text-gray-400 dark:text-dark-600">slug: <span className="font-mono">{formData.slug}</span></p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-dark-700 mb-1.5">Logo (URL)</label>
+                    <input
+                      type="url"
+                      value={formData.logo_url}
+                      onChange={(e) => setFormData(prev => ({ ...prev, logo_url: e.target.value }))}
+                      className="w-full px-4 py-2.5 border border-gray-200 dark:border-dark-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-dark-200 dark:text-dark-900 transition-colors"
+                      placeholder="https://example.com/logo.png"
+                    />
+                    <p className="mt-1.5 text-xs text-gray-400 dark:text-dark-600">Podaj bezpośredni link do pliku graficznego.</p>
+                    {formData.logo_url && (
+                      <div className="mt-2 p-2 border border-gray-200 dark:border-dark-300 rounded-lg inline-block">
+                        <img src={formData.logo_url} alt="Podgląd logo" className="h-10 w-auto object-contain" />
+                      </div>
                     )}
                   </div>
                   <div className="grid grid-cols-3 gap-3">

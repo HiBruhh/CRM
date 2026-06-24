@@ -6,9 +6,16 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS'
 }
 
-const systemPrompt = `You are an OCR engine for fuel receipts from Polish gas stations.
-Analyze the provided receipt image and extract ONLY fuel-related items.
-Ignore absolutely all non-fuel purchases (food, drinks, washer fluid, chewing gum, car wash, etc.).
+const systemPrompt = `You are an OCR engine for Polish fuel receipts from gas stations.
+Your task is to extract ONLY fuel-related purchases. Ignore all other items (food, drinks, washer fluid, chewing gum, car wash, etc.).
+
+How to read the receipt:
+1. Locate the receipt date at the top of the receipt (format YYYY-MM-DD).
+2. Scan the item lines for fuel types. Look for keywords such as: PB95, PB.95, PB98, PB.98, ON, DIESEL, LPG, AUTOGAZ, BENZYNA, BENZYNA 95, BENZYNA 98.
+3. When you find a fuel line, locate the adjacent calculation line. On Polish receipts it usually looks like: [quantity]litr * [unit price] = [total] (e.g. "34,72litr*3,55= 123,26 A" or "34,72 litr * 3,55 = 123,26 A").
+4. Ignore distributor numbers (e.g. "dystr.: 4"), pump numbers, and any non-fuel products.
+5. Convert Polish decimal commas to dots (e.g. "3,55" becomes 3.55, "34,72" becomes 34.72).
+6. A single receipt may contain multiple fuel types (e.g. PB95 and LPG). Create one fuels entry per fuel type.
 
 Return ONLY a JSON object in this exact format:
 {
@@ -26,11 +33,17 @@ Return ONLY a JSON object in this exact format:
 
 Rules:
 - date: ISO 8601 (YYYY-MM-DD). Use the receipt date. If the year is missing, assume the current year.
-- fuels array: one object per fuel type found on the receipt. A single receipt may contain multiple fuel types (e.g., PB95 and LPG).
-- type: normalize to one of: PB95, PB98, ON, Diesel, LPG, EV. If you are unsure, keep the exact label from the receipt.
-- volume_liters: number of liters or kWh for EV charging.
-- unit_price: price per liter or per kWh in PLN.
-- total_price: volume_liters * unit_price (use the value from the receipt if present).
+- fuels array: one object per fuel type found on the receipt.
+- type: normalize to one of: PB95, PB98, ON, Diesel, LPG, EV. Examples:
+  - "PB95", "BENZYNA 95", "PB.95" or just "BENZYNA" when 95 is implied -> PB95
+  - "PB98", "BENZYNA 98", "PB.98" -> PB98
+  - "ON", "DIESEL", "OLEJ NAPEDOWY" -> ON (or Diesel)
+  - "LPG", "AUTOGAZ" -> LPG
+  - EV charging -> EV
+  - If unsure, keep the exact label from the receipt.
+- volume_liters: number of liters or kWh for EV charging. Convert commas to dots.
+- unit_price: price per liter or per kWh in PLN. Convert commas to dots.
+- total_price: total for that fuel line (use the value from the receipt if present). Convert commas to dots.
 - grand_total_fuel_only: sum of all fuel total_price values.
 - If no fuel is found, return an empty fuels array and grand_total_fuel_only: 0.
 - Do not add markdown, explanations, or comments. Only JSON.`
@@ -51,15 +64,15 @@ const parseJsonResponse = (rawContent: any) => {
   }
 }
 
-const callXAI = async (apiKey: string, image: string) => {
-  const response = await fetch('https://api.x.ai/v1/chat/completions', {
+const callGroq = async (apiKey: string, image: string) => {
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      model: 'grok-vision-beta',
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
       messages: [
         { role: 'system', content: systemPrompt },
         {
@@ -77,14 +90,14 @@ const callXAI = async (apiKey: string, image: string) => {
 
   if (!response.ok) {
     const errText = await response.text()
-    throw new Error(`xAI API error: ${response.status} ${errText}`)
+    throw new Error(`Groq API error: ${response.status} ${errText}`)
   }
 
   const data = await response.json()
   const rawContent = data.choices?.[0]?.message?.content
 
   if (!rawContent) {
-    throw new Error('Brak odpowiedzi z modelu xAI')
+    throw new Error('Brak odpowiedzi z modelu Groq')
   }
 
   return parseJsonResponse(rawContent)
@@ -104,15 +117,15 @@ serve(async (req) => {
       })
     }
 
-    const apiKey = Deno.env.get('XAI_API_KEY')
+    const apiKey = Deno.env.get('GROQ_API_KEY')
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'Brak klucza XAI_API_KEY w zmiennych środowiskowych' }), {
+      return new Response(JSON.stringify({ error: 'Brak klucza GROQ_API_KEY w zmiennych środowiskowych' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
 
-    const parsed = await callXAI(apiKey, image)
+    const parsed = await callGroq(apiKey, image)
 
     // Normalize fuels array
     if (!parsed.fuels || !Array.isArray(parsed.fuels)) {

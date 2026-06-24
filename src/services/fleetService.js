@@ -13,6 +13,16 @@ export const fetchVehicles = async (organizationId) => {
   return data || []
 }
 
+export const fetchAllVehicles = async () => {
+  const { data, error } = await supabase
+    .from('vehicles')
+    .select('*, organization:organizations(id, name, slug)')
+    .order('brand', { ascending: true })
+
+  if (error) throw error
+  return data || []
+}
+
 export const fetchVehicleById = async (vehicleId) => {
   const { data, error } = await supabase
     .from('vehicles')
@@ -103,6 +113,21 @@ export const fetchFuelCostSummary = async (organizationId) => {
     .from('fuel_reports')
     .select('vehicle_id, total_cost')
     .eq('organization_id', organizationId)
+
+  if (error) throw error
+
+  const summary = {}
+  for (const row of data || []) {
+    summary[row.vehicle_id] = (summary[row.vehicle_id] || 0) + Number(row.total_cost)
+  }
+
+  return summary
+}
+
+export const fetchFuelCostSummaryAll = async () => {
+  const { data, error } = await supabase
+    .from('fuel_reports')
+    .select('vehicle_id, total_cost')
 
   if (error) throw error
 

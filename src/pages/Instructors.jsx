@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useSupabase } from '../contexts/SupabaseContext'
 import { useNavigate } from 'react-router-dom'
-import { Car, Users, Plus, Search, Edit, Trash2, Phone, Mail, X, Building2, User, Lock, Award, Shield, Briefcase, Check } from 'lucide-react'
+import { Car, Users, Plus, Search, Edit, Trash2, Phone, Mail, X, Building2, User, Award, Shield, Briefcase, Check } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const Instructors = () => {
@@ -21,7 +21,6 @@ const Instructors = () => {
     first_name: '',
     last_name: '',
     email: '',
-    password: '',
     phone: '',
     license_number: '',
     status: 'active',
@@ -163,13 +162,12 @@ const Instructors = () => {
 
       if (error) throw error
 
-      toast.success('Instruktor został dodany pomyślnie')
+      toast.success(data?.message || 'Instruktor został dodany')
       setShowAddModal(false)
       setFormData({
         first_name: '',
         last_name: '',
         email: '',
-        password: '',
         phone: '',
         license_number: '',
         status: 'active',
@@ -232,7 +230,6 @@ const Instructors = () => {
         first_name: '',
         last_name: '',
         email: '',
-        password: '',
         phone: '',
         license_number: '',
         status: 'active'
@@ -284,7 +281,6 @@ const Instructors = () => {
       first_name: instructor.first_name,
       last_name: instructor.last_name,
       email: instructor.email,
-      password: '',
       phone: instructor.phone,
       license_number: instructor.license_number,
       status: instructor.status
@@ -675,26 +671,15 @@ const Instructors = () => {
                 </div>
               </div>
 
-              <div className="mb-6">
-                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center">
-                  <Lock className="h-3.5 w-3.5 mr-1.5" />
-                  Dane logowania
-                </h4>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Hasło</label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <input
-                      type="password"
-                      required
-                      minLength={6}
-                      placeholder="Minimum 6 znaków"
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
-                    />
+              <div className="mb-6 bg-blue-50 dark:bg-blue-900/10 rounded-lg p-4 border border-blue-100 dark:border-blue-800">
+                <div className="flex items-start gap-3">
+                  <Mail className="h-5 w-5 text-blue-600 mt-0.5" />
+                  <div>
+                    <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100">Aktywacja konta</h4>
+                    <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                      Po zapisaniu instruktor otrzyma email z linkiem aktywacyjnym. Kliknie go, ustawi hasło i konto będzie gotowe do logowania.
+                    </p>
                   </div>
-                  <p className="mt-1.5 text-xs text-gray-500">Hasło musi mieć co najmniej 6 znaków. Instruktor może je później zmienić w profilu.</p>
                 </div>
               </div>
 

@@ -10,7 +10,10 @@ import {
   Car,
   AlertCircle,
   Settings2,
-  FileText
+  FileText,
+  Fuel,
+  Gauge,
+  TrendingUp
 } from 'lucide-react'
 import LoadingSpinner from '../components/LoadingSpinner'
 import toast from 'react-hot-toast'
@@ -43,8 +46,9 @@ const VehicleDetail = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [editForm, setEditForm] = useState({})
   const [formErrors, setFormErrors] = useState({})
+  const [activeTab, setActiveTab] = useState('details')
 
-  const isAdmin = user?.role === 'org_admin' || user?.isSuperAdmin || user?.role === 'admin'
+  const isAdmin = user?.role === 'org_admin' || user?.isSuperAdmin || user?.role === 'super_admin'
 
   useEffect(() => {
     loadVehicle()
@@ -160,6 +164,26 @@ const VehicleDetail = () => {
   const alert = getVehicleAlert(vehicle)
   const alertText = getVehicleAlertText(vehicle)
 
+  const sortedReports = [...fuelReports].sort((a, b) => {
+    const dateA = new Date(a.receipt_date)
+    const dateB = new Date(b.receipt_date)
+    if (dateA.getTime() !== dateB.getTime()) return dateB.getTime() - dateA.getTime()
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  })
+
+  const latestMileage = sortedReports.length > 0 && sortedReports[0].current_mileage != null
+    ? sortedReports[0].current_mileage
+    : null
+
+  const mileageDiffs = {}
+  for (let i = 0; i < sortedReports.length; i++) {
+    const current = sortedReports[i]
+    const next = sortedReports[i + 1]
+    if (current.current_mileage != null && next && next.current_mileage != null) {
+      mileageDiffs[current.id] = current.current_mileage - next.current_mileage
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-dark-50">
       <div className="max-w-5xl mx-auto p-6">
@@ -217,192 +241,163 @@ const VehicleDetail = () => {
           </div>
         </div>
 
-        {/* Vehicle details / edit form */}
-        <div className="bg-white dark:bg-dark-100 rounded-xl shadow-sm p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-dark-900 mb-4 flex items-center gap-2">
-            <Settings2 className="h-5 w-5" />
-            Dane pojazdu
-          </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {isEditing ? (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-900 mb-1">Marka *</label>
-                  <input
-                    type="text"
-                    value={editForm.brand}
-                    onChange={(e) => setEditForm({ ...editForm, brand: e.target.value })}
-                    className={`w-full px-3 py-2 border rounded-lg dark:bg-dark-200 dark:text-dark-900 ${formErrors.brand ? 'border-red-500' : 'border-gray-300 dark:border-dark-300'}`}
-                  />
-                  {formErrors.brand && <p className="text-xs text-red-500 mt-1">{formErrors.brand}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-900 mb-1">Model *</label>
-                  <input
-                    type="text"
-                    value={editForm.model}
-                    onChange={(e) => setEditForm({ ...editForm, model: e.target.value })}
-                    className={`w-full px-3 py-2 border rounded-lg dark:bg-dark-200 dark:text-dark-900 ${formErrors.model ? 'border-red-500' : 'border-gray-300 dark:border-dark-300'}`}
-                  />
-                  {formErrors.model && <p className="text-xs text-red-500 mt-1">{formErrors.model}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-900 mb-1">Rok produkcji</label>
-                  <input
-                    type="number"
-                    value={editForm.production_year}
-                    onChange={(e) => setEditForm({ ...editForm, production_year: e.target.value })}
-                    className={`w-full px-3 py-2 border rounded-lg dark:bg-dark-200 dark:text-dark-900 ${formErrors.production_year ? 'border-red-500' : 'border-gray-300 dark:border-dark-300'}`}
-                  />
-                  {formErrors.production_year && <p className="text-xs text-red-500 mt-1">{formErrors.production_year}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-900 mb-1">Numer rejestracyjny *</label>
-                  <input
-                    type="text"
-                    value={editForm.registration_plate}
-                    onChange={(e) => setEditForm({ ...editForm, registration_plate: e.target.value })}
-                    className={`w-full px-3 py-2 border rounded-lg dark:bg-dark-200 dark:text-dark-900 ${formErrors.registration_plate ? 'border-red-500' : 'border-gray-300 dark:border-dark-300'}`}
-                  />
-                  {formErrors.registration_plate && <p className="text-xs text-red-500 mt-1">{formErrors.registration_plate}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-900 mb-1">VIN</label>
-                  <input
-                    type="text"
-                    value={editForm.vin}
-                    onChange={(e) => setEditForm({ ...editForm, vin: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg dark:bg-dark-200 dark:text-dark-900"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-900 mb-1">Pojemność silnika</label>
-                  <input
-                    type="text"
-                    value={editForm.engine_capacity}
-                    onChange={(e) => setEditForm({ ...editForm, engine_capacity: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg dark:bg-dark-200 dark:text-dark-900"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-900 mb-1">Rodzaj paliwa</label>
-                  <select
-                    value={editForm.fuel_type}
-                    onChange={(e) => setEditForm({ ...editForm, fuel_type: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg dark:bg-dark-200 dark:text-dark-900"
-                  >
-                    {fuelTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-900 mb-1">Skrzynia biegów</label>
-                  <select
-                    value={editForm.transmission}
-                    onChange={(e) => setEditForm({ ...editForm, transmission: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg dark:bg-dark-200 dark:text-dark-900"
-                  >
-                    {transmissions.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-900 mb-1">Kategoria prawa jazdy</label>
-                  <select
-                    value={editForm.license_category}
-                    onChange={(e) => setEditForm({ ...editForm, license_category: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg dark:bg-dark-200 dark:text-dark-900"
-                  >
-                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-900 mb-1">Status</label>
-                  <select
-                    value={editForm.status}
-                    onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg dark:bg-dark-200 dark:text-dark-900"
-                  >
-                    {statuses.map(s => (
-                      <option key={s} value={s}>
-                        {s === 'active' ? 'Aktywny' : s === 'service' ? 'Serwis' : 'Nieaktywny'}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-900 mb-1">Ważność OC</label>
-                  <input
-                    type="text"
-                    value={editForm.insurance_expiry}
-                    onChange={(e) => setEditForm({ ...editForm, insurance_expiry: e.target.value })}
-                    placeholder="YYYY-MM-DD"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg dark:bg-dark-200 dark:text-dark-900"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-900 mb-1">Ważność przeglądu</label>
-                  <input
-                    type="text"
-                    value={editForm.inspection_expiry}
-                    onChange={(e) => setEditForm({ ...editForm, inspection_expiry: e.target.value })}
-                    placeholder="YYYY-MM-DD"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg dark:bg-dark-200 dark:text-dark-900"
-                  />
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="p-3 bg-gray-50 dark:bg-dark-200 rounded-lg">
-                  <p className="text-xs text-gray-500 dark:text-dark-500">Marka / Model</p>
-                  <p className="font-medium text-gray-900 dark:text-dark-900">{vehicle.brand} {vehicle.model}</p>
-                </div>
-                <div className="p-3 bg-gray-50 dark:bg-dark-200 rounded-lg">
-                  <p className="text-xs text-gray-500 dark:text-dark-500">Rok produkcji</p>
-                  <p className="font-medium text-gray-900 dark:text-dark-900">{vehicle.production_year || '-'}</p>
-                </div>
-                <div className="p-3 bg-gray-50 dark:bg-dark-200 rounded-lg">
-                  <p className="text-xs text-gray-500 dark:text-dark-500">Rejestracja</p>
-                  <p className="font-medium text-gray-900 dark:text-dark-900">{vehicle.registration_plate}</p>
-                </div>
-                <div className="p-3 bg-gray-50 dark:bg-dark-200 rounded-lg">
-                  <p className="text-xs text-gray-500 dark:text-dark-500">VIN</p>
-                  <p className="font-medium text-gray-900 dark:text-dark-900">{vehicle.vin || '-'}</p>
-                </div>
-                <div className="p-3 bg-gray-50 dark:bg-dark-200 rounded-lg">
-                  <p className="text-xs text-gray-500 dark:text-dark-500">Pojemność silnika</p>
-                  <p className="font-medium text-gray-900 dark:text-dark-900">{vehicle.engine_capacity || '-'}</p>
-                </div>
-                <div className="p-3 bg-gray-50 dark:bg-dark-200 rounded-lg">
-                  <p className="text-xs text-gray-500 dark:text-dark-500">Paliwo / Skrzynia</p>
-                  <p className="font-medium text-gray-900 dark:text-dark-900">{vehicle.fuel_type || '-'} / {vehicle.transmission || '-'}</p>
-                </div>
-                <div className="p-3 bg-gray-50 dark:bg-dark-200 rounded-lg">
-                  <p className="text-xs text-gray-500 dark:text-dark-500">Kategoria prawa jazdy</p>
-                  <p className="font-medium text-gray-900 dark:text-dark-900">{vehicle.license_category || '-'}</p>
-                </div>
-                <div className="p-3 bg-gray-50 dark:bg-dark-200 rounded-lg">
-                  <p className="text-xs text-gray-500 dark:text-dark-500">Status</p>
-                  <p className="font-medium text-gray-900 dark:text-dark-900">
-                    {vehicle.status === 'active' ? 'Aktywny' : vehicle.status === 'service' ? 'Serwis' : 'Nieaktywny'}
-                  </p>
-                </div>
-                <div className="p-3 bg-gray-50 dark:bg-dark-200 rounded-lg">
-                  <p className="text-xs text-gray-500 dark:text-dark-500">Ważność OC</p>
-                  <p className="font-medium text-gray-900 dark:text-dark-900">{formatLocalDate(vehicle.insurance_expiry) || '-'}</p>
-                </div>
-                <div className="p-3 bg-gray-50 dark:bg-dark-200 rounded-lg">
-                  <p className="text-xs text-gray-500 dark:text-dark-500">Ważność przeglądu</p>
-                  <p className="font-medium text-gray-900 dark:text-dark-900">{formatLocalDate(vehicle.inspection_expiry) || '-'}</p>
-                </div>
-                <div className="p-3 bg-gray-50 dark:bg-dark-200 rounded-lg">
-                  <p className="text-xs text-gray-500 dark:text-dark-500">Dodano</p>
-                  <p className="font-medium text-gray-900 dark:text-dark-900">{formatLocalDate(vehicle.created_at)}</p>
-                </div>
-              </>
-            )}
+        {/* Tabs */}
+        {!isEditing && (
+          <div className="flex gap-1 mb-6 bg-white dark:bg-dark-100 p-1 rounded-xl shadow-sm border border-gray-200 dark:border-dark-200">
+            <button
+              onClick={() => setActiveTab('details')}
+              className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                activeTab === 'details'
+                  ? 'bg-primary-600 text-white'
+                  : 'text-gray-600 dark:text-dark-600 hover:bg-gray-50 dark:hover:bg-dark-200'
+              }`}
+            >
+              Dane pojazdu
+            </button>
+            <button
+              onClick={() => setActiveTab('history')}
+              className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                activeTab === 'history'
+                  ? 'bg-primary-600 text-white'
+                  : 'text-gray-600 dark:text-dark-600 hover:bg-gray-50 dark:hover:bg-dark-200'
+              }`}
+            >
+              Historia tankowania
+            </button>
           </div>
+        )}
 
-          {isEditing && (
+        {/* Vehicle details / edit form */}
+        {isEditing ? (
+          <div className="bg-white dark:bg-dark-100 rounded-xl shadow-sm p-6 mb-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-dark-900 mb-4 flex items-center gap-2">
+              <Edit className="h-5 w-5" />
+              Edycja pojazdu
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-900 mb-1">Marka *</label>
+                <input
+                  type="text"
+                  value={editForm.brand}
+                  onChange={(e) => setEditForm({ ...editForm, brand: e.target.value })}
+                  className={`w-full px-3 py-2 border rounded-lg dark:bg-dark-200 dark:text-dark-900 ${formErrors.brand ? 'border-red-500' : 'border-gray-300 dark:border-dark-300'}`}
+                />
+                {formErrors.brand && <p className="text-xs text-red-500 mt-1">{formErrors.brand}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-900 mb-1">Model *</label>
+                <input
+                  type="text"
+                  value={editForm.model}
+                  onChange={(e) => setEditForm({ ...editForm, model: e.target.value })}
+                  className={`w-full px-3 py-2 border rounded-lg dark:bg-dark-200 dark:text-dark-900 ${formErrors.model ? 'border-red-500' : 'border-gray-300 dark:border-dark-300'}`}
+                />
+                {formErrors.model && <p className="text-xs text-red-500 mt-1">{formErrors.model}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-900 mb-1">Rok produkcji</label>
+                <input
+                  type="number"
+                  value={editForm.production_year}
+                  onChange={(e) => setEditForm({ ...editForm, production_year: e.target.value })}
+                  className={`w-full px-3 py-2 border rounded-lg dark:bg-dark-200 dark:text-dark-900 ${formErrors.production_year ? 'border-red-500' : 'border-gray-300 dark:border-dark-300'}`}
+                />
+                {formErrors.production_year && <p className="text-xs text-red-500 mt-1">{formErrors.production_year}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-900 mb-1">Numer rejestracyjny *</label>
+                <input
+                  type="text"
+                  value={editForm.registration_plate}
+                  onChange={(e) => setEditForm({ ...editForm, registration_plate: e.target.value })}
+                  className={`w-full px-3 py-2 border rounded-lg dark:bg-dark-200 dark:text-dark-900 ${formErrors.registration_plate ? 'border-red-500' : 'border-gray-300 dark:border-dark-300'}`}
+                />
+                {formErrors.registration_plate && <p className="text-xs text-red-500 mt-1">{formErrors.registration_plate}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-900 mb-1">VIN</label>
+                <input
+                  type="text"
+                  value={editForm.vin}
+                  onChange={(e) => setEditForm({ ...editForm, vin: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg dark:bg-dark-200 dark:text-dark-900"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-900 mb-1">Pojemność silnika</label>
+                <input
+                  type="text"
+                  value={editForm.engine_capacity}
+                  onChange={(e) => setEditForm({ ...editForm, engine_capacity: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg dark:bg-dark-200 dark:text-dark-900"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-900 mb-1">Rodzaj paliwa</label>
+                <select
+                  value={editForm.fuel_type}
+                  onChange={(e) => setEditForm({ ...editForm, fuel_type: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg dark:bg-dark-200 dark:text-dark-900"
+                >
+                  {fuelTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-900 mb-1">Skrzynia biegów</label>
+                <select
+                  value={editForm.transmission}
+                  onChange={(e) => setEditForm({ ...editForm, transmission: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg dark:bg-dark-200 dark:text-dark-900"
+                >
+                  {transmissions.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-900 mb-1">Kategoria prawa jazdy</label>
+                <select
+                  value={editForm.license_category}
+                  onChange={(e) => setEditForm({ ...editForm, license_category: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg dark:bg-dark-200 dark:text-dark-900"
+                >
+                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-900 mb-1">Status</label>
+                <select
+                  value={editForm.status}
+                  onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg dark:bg-dark-200 dark:text-dark-900"
+                >
+                  {statuses.map(s => (
+                    <option key={s} value={s}>
+                      {s === 'active' ? 'Aktywny' : s === 'service' ? 'Serwis' : 'Nieaktywny'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-900 mb-1">Ważność OC</label>
+                <input
+                  type="text"
+                  value={editForm.insurance_expiry}
+                  onChange={(e) => setEditForm({ ...editForm, insurance_expiry: e.target.value })}
+                  placeholder="YYYY-MM-DD"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg dark:bg-dark-200 dark:text-dark-900"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-900 mb-1">Ważność przeglądu</label>
+                <input
+                  type="text"
+                  value={editForm.inspection_expiry}
+                  onChange={(e) => setEditForm({ ...editForm, inspection_expiry: e.target.value })}
+                  placeholder="YYYY-MM-DD"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg dark:bg-dark-200 dark:text-dark-900"
+                />
+              </div>
+            </div>
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setIsEditing(false)}
@@ -419,65 +414,191 @@ const VehicleDetail = () => {
                 {isSaving ? 'Zapisywanie...' : 'Zapisz zmiany'}
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        ) : activeTab === 'details' ? (
+          <div className="bg-white dark:bg-dark-100 rounded-xl shadow-sm p-6 mb-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-dark-900 mb-4 flex items-center gap-2">
+              <Settings2 className="h-5 w-5" />
+              Dane pojazdu
+            </h2>
+            <div className="space-y-6">
+              {/* Basic info */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-dark-500 uppercase tracking-wider mb-3">Podstawowe informacje</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="p-4 bg-gray-50 dark:bg-dark-200 rounded-xl border border-gray-100 dark:border-dark-200">
+                    <p className="text-xs text-gray-500 dark:text-dark-500 mb-1">Marka / Model</p>
+                    <p className="font-semibold text-gray-900 dark:text-dark-900">{vehicle.brand} {vehicle.model}</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 dark:bg-dark-200 rounded-xl border border-gray-100 dark:border-dark-200">
+                    <p className="text-xs text-gray-500 dark:text-dark-500 mb-1">Numer rejestracyjny</p>
+                    <p className="font-semibold text-gray-900 dark:text-dark-900">{vehicle.registration_plate}</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 dark:bg-dark-200 rounded-xl border border-gray-100 dark:border-dark-200">
+                    <p className="text-xs text-gray-500 dark:text-dark-500 mb-1">Rok produkcji</p>
+                    <p className="font-semibold text-gray-900 dark:text-dark-900">{vehicle.production_year || '-'}</p>
+                  </div>
+                </div>
+              </div>
 
-        {/* Fuel history */}
-        <div className="bg-white dark:bg-dark-100 rounded-xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-dark-900 mb-4 flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Historia tankowania
-          </h2>
+              {/* Technical */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-dark-500 uppercase tracking-wider mb-3">Dane techniczne</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="p-4 bg-gray-50 dark:bg-dark-200 rounded-xl border border-gray-100 dark:border-dark-200">
+                    <p className="text-xs text-gray-500 dark:text-dark-500 mb-1">Paliwo / Skrzynia</p>
+                    <p className="font-semibold text-gray-900 dark:text-dark-900 capitalize">{vehicle.fuel_type || '-'} / {vehicle.transmission || '-'}</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 dark:bg-dark-200 rounded-xl border border-gray-100 dark:border-dark-200">
+                    <p className="text-xs text-gray-500 dark:text-dark-500 mb-1">Pojemność silnika</p>
+                    <p className="font-semibold text-gray-900 dark:text-dark-900">{vehicle.engine_capacity || '-'}</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 dark:bg-dark-200 rounded-xl border border-gray-100 dark:border-dark-200">
+                    <p className="text-xs text-gray-500 dark:text-dark-500 mb-1">Kategoria prawa jazdy</p>
+                    <p className="font-semibold text-gray-900 dark:text-dark-900">{vehicle.license_category || '-'}</p>
+                  </div>
+                </div>
+              </div>
 
-          {fuelReports.length === 0 ? (
-            <p className="text-gray-500 dark:text-dark-500 text-center py-8">
-              Brak historii tankowania dla tego pojazdu
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 dark:bg-dark-200 text-gray-700 dark:text-dark-900">
-                  <tr>
-                    <th className="text-left px-4 py-3 rounded-tl-lg">Data</th>
-                    <th className="text-left px-4 py-3">Instruktor</th>
-                    <th className="text-left px-4 py-3">Paliwo</th>
-                    <th className="text-right px-4 py-3">Ilość</th>
-                    <th className="text-right px-4 py-3">Cena</th>
-                    <th className="text-right px-4 py-3 rounded-tr-lg">Suma</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-dark-200">
-                  {fuelReports.map((report) => {
-                    const fuels = Array.isArray(report.fuel_data) ? report.fuel_data : []
-                    return fuels.map((fuel, idx) => (
-                      <tr key={`${report.id}-${idx}`} className="hover:bg-gray-50 dark:hover:bg-dark-200/50">
-                        <td className="px-4 py-3 text-gray-900 dark:text-dark-900">
-                          {formatLocalDate(report.receipt_date)}
-                        </td>
-                        <td className="px-4 py-3 text-gray-900 dark:text-dark-900">
-                          {getInstructorName(report)}
-                        </td>
-                        <td className="px-4 py-3 text-gray-900 dark:text-dark-900">{fuel.type || '-'}</td>
-                        <td className="px-4 py-3 text-right text-gray-900 dark:text-dark-900">{fuel.volume_liters || '-'}</td>
-                        <td className="px-4 py-3 text-right text-gray-900 dark:text-dark-900">{fuel.unit_price || '-'}</td>
-                        <td className="px-4 py-3 text-right font-medium text-gray-900 dark:text-dark-900">{formatCurrency(fuel.total_price)}</td>
-                      </tr>
-                    ))
-                  })}
-                </tbody>
-              </table>
+              {/* Documents and mileage */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-dark-500 uppercase tracking-wider mb-3">Ubezpieczenie, przegląd i przebieg</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="p-4 bg-gray-50 dark:bg-dark-200 rounded-xl border border-gray-100 dark:border-dark-200">
+                    <p className="text-xs text-gray-500 dark:text-dark-500 mb-1">Ważność OC</p>
+                    <p className="font-semibold text-gray-900 dark:text-dark-900">{formatLocalDate(vehicle.insurance_expiry) || '-'}</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 dark:bg-dark-200 rounded-xl border border-gray-100 dark:border-dark-200">
+                    <p className="text-xs text-gray-500 dark:text-dark-500 mb-1">Ważność przeglądu</p>
+                    <p className="font-semibold text-gray-900 dark:text-dark-900">{formatLocalDate(vehicle.inspection_expiry) || '-'}</p>
+                  </div>
+                  <div className="p-4 bg-primary-50 dark:bg-primary-900/10 rounded-xl border border-primary-100 dark:border-primary-800">
+                    <p className="text-xs text-primary-600 dark:text-primary-400 mb-1">Aktualny przebieg</p>
+                    <p className="font-semibold text-primary-700 dark:text-primary-300">
+                      {latestMileage !== null ? `${latestMileage.toLocaleString('pl-PL')} km` : '-'}
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-              <div className="flex justify-end mt-4 pt-4 border-t border-gray-200 dark:border-dark-200">
-                <div className="flex items-center gap-2 text-gray-900 dark:text-dark-900">
-                  <span className="text-gray-500 dark:text-dark-500">Całkowity koszt paliwa:</span>
-                  <span className="font-semibold">
-                    {formatCurrency(fuelReports.reduce((sum, r) => sum + Number(r.total_cost || 0), 0))}
-                  </span>
+              {/* VIN and dates */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-4 bg-gray-50 dark:bg-dark-200 rounded-xl border border-gray-100 dark:border-dark-200">
+                  <p className="text-xs text-gray-500 dark:text-dark-500 mb-1">VIN</p>
+                  <p className="font-semibold text-gray-900 dark:text-dark-900 font-mono">{vehicle.vin || '-'}</p>
+                </div>
+                <div className="p-4 bg-gray-50 dark:bg-dark-200 rounded-xl border border-gray-100 dark:border-dark-200">
+                  <p className="text-xs text-gray-500 dark:text-dark-500 mb-1">Dodano do floty</p>
+                  <p className="font-semibold text-gray-900 dark:text-dark-900">{formatLocalDate(vehicle.created_at)}</p>
                 </div>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        ) : null}
+
+        {/* Fuel history */}
+        {!isEditing && activeTab === 'history' && (
+          <div className="bg-white dark:bg-dark-100 rounded-xl shadow-sm p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-dark-900 flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Historia tankowania
+              </h2>
+              <div className="text-sm text-gray-500 dark:text-dark-500">
+                Łącznie: <span className="font-semibold text-gray-900 dark:text-dark-900">{formatCurrency(fuelReports.reduce((sum, r) => sum + Number(r.total_cost || 0), 0))}</span>
+              </div>
+            </div>
+
+            {fuelReports.length === 0 ? (
+              <div className="text-center py-12 bg-gray-50 dark:bg-dark-200/50 rounded-xl border border-dashed border-gray-200 dark:border-dark-200">
+                <Fuel className="h-10 w-10 text-gray-300 dark:text-dark-300 mx-auto mb-3" />
+                <p className="text-gray-500 dark:text-dark-500">Brak historii tankowania dla tego pojazdu</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {sortedReports.map((report) => {
+                  const fuels = Array.isArray(report.fuel_data) ? report.fuel_data : []
+                  const diff = mileageDiffs[report.id]
+                  return (
+                    <div
+                      key={report.id}
+                      className="border border-gray-200 dark:border-dark-200 rounded-xl overflow-hidden"
+                    >
+                      <div className="bg-gray-50 dark:bg-dark-200/50 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div className="flex items-center gap-4">
+                          <div className="p-2 bg-white dark:bg-dark-100 rounded-lg shadow-sm">
+                            <Fuel className="h-5 w-5 text-primary-600" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900 dark:text-dark-900">
+                              {formatLocalDate(report.receipt_date)}
+                            </p>
+                            <p className="text-sm text-gray-500 dark:text-dark-500">
+                              {getInstructorName(report)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-4 text-sm">
+                          {report.current_mileage != null && (
+                            <div className="flex items-center gap-1.5">
+                              <Gauge className="h-4 w-4 text-gray-400" />
+                              <span className="text-gray-600 dark:text-dark-600">Przebieg:</span>
+                              <span className="font-semibold text-gray-900 dark:text-dark-900">{report.current_mileage.toLocaleString('pl-PL')} km</span>
+                            </div>
+                          )}
+                          {diff != null && (
+                            <div className="flex items-center gap-1.5 text-green-600">
+                              <TrendingUp className="h-4 w-4" />
+                              <span className="font-semibold">+{diff.toLocaleString('pl-PL')} km</span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-gray-600 dark:text-dark-600">Brutto:</span>
+                            <span className="font-semibold text-gray-900 dark:text-dark-900">{formatCurrency(report.total_cost)}</span>
+                          </div>
+                        </div>
+                      </div>
+                      {fuels.length > 0 && (
+                        <div className="p-4">
+                          <div className="grid grid-cols-4 gap-3 text-xs text-gray-500 dark:text-dark-500 uppercase tracking-wider mb-2">
+                            <span className="col-span-1">Paliwo</span>
+                            <span className="col-span-1 text-right">Ilość</span>
+                            <span className="col-span-1 text-right">Cena</span>
+                            <span className="col-span-1 text-right">Wartość</span>
+                          </div>
+                          <div className="space-y-2">
+                            {fuels.map((fuel, idx) => (
+                              <div key={idx} className="grid grid-cols-4 gap-3 py-2 border-b border-gray-100 dark:border-dark-200 last:border-0 text-sm">
+                                <span className="col-span-1 text-gray-900 dark:text-dark-900">{fuel.type || '-'}</span>
+                                <span className="col-span-1 text-right text-gray-900 dark:text-dark-900">{fuel.volume_liters || '-'} L</span>
+                                <span className="col-span-1 text-right text-gray-900 dark:text-dark-900">{fuel.unit_price || '-'} zł</span>
+                                <span className="col-span-1 text-right font-medium text-gray-900 dark:text-dark-900">{formatCurrency(fuel.total_price)}</span>
+                              </div>
+                            ))}
+                          </div>
+                          {(() => {
+                            const rate = report.vat_rate != null ? Number(report.vat_rate) : 23
+                            const gross = Number(report.total_cost || 0)
+                            const net = report.net_amount != null ? Number(report.net_amount) : Number((gross / (1 + rate / 100)).toFixed(2))
+                            const vat = report.vat_amount != null ? Number(report.vat_amount) : Number((gross - net).toFixed(2))
+                            return (
+                              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-dark-200 flex flex-wrap gap-4 text-xs text-gray-600 dark:text-dark-600">
+                                <span>Stawka VAT: <strong className="text-gray-900 dark:text-dark-900">{rate}%</strong></span>
+                                <span>Netto: <strong className="text-gray-900 dark:text-dark-900">{formatCurrency(net)}</strong></span>
+                                <span>VAT: <strong className="text-gray-900 dark:text-dark-900">{formatCurrency(vat)}</strong></span>
+                                <span>Brutto: <strong className="text-gray-900 dark:text-dark-900">{formatCurrency(gross)}</strong></span>
+                              </div>
+                            )
+                          })()}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Delete confirmation */}
