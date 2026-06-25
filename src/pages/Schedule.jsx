@@ -182,6 +182,8 @@ const Schedule = () => {
         let title = ''
         if (lesson.status === 'pending') {
           title = `${instructorIcon} ${shortInstructorName}\n${studentIcon} ${shortStudentName}`
+        } else if (lesson.status === 'proposed') {
+          title = `❓ ${shortInstructorName}\n${shortStudentName}`
         } else if (lesson.status === 'in_progress') {
           title = `🚗 ${shortInstructorName} + ${shortStudentName}`
         } else if (lesson.status === 'completed') {
@@ -236,6 +238,7 @@ const Schedule = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending': return '#f59e0b'
+      case 'proposed': return '#a855f7'
       case 'in_progress': return '#3b82f6'
       case 'completed': return '#10b981'
       case 'cancelled': return '#ef4444'

@@ -79,6 +79,31 @@ export const AuthProvider = ({ children }) => {
       } catch (error) {
         console.error('Error fetching organization_id:', error)
       }
+    } else if (role === 'student') {
+      // Pobieramy dane kursanta
+      try {
+        const { data: studentData } = await supabase
+          .from('students')
+          .select('id, first_name, last_name, organization_id, notification_enabled')
+          .eq('auth_id', authUser.id)
+          .maybeSingle()
+        
+        if (studentData) {
+          organizationId = studentData.organization_id
+          return {
+            ...authUser,
+            role: 'student',
+            organizationId,
+            isSuperAdmin: false,
+            studentId: studentData.id,
+            firstName: studentData.first_name,
+            lastName: studentData.last_name,
+            notificationEnabled: studentData.notification_enabled
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching student data:', error)
+      }
     }
     
     return {
@@ -204,6 +229,45 @@ export const AuthProvider = ({ children }) => {
     return userWithRole
   }
 
+  const studentLogin = async (email, code) => {
+    const { data: sessionData } = await supabase.auth.getSession()
+    const adminToken = sessionData?.session?.access_token
+
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-student-otp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': adminToken ? `Bearer ${adminToken}` : `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+      },
+      body: JSON.stringify({ email, code })
+    })
+
+    const result = await response.json()
+    if (!response.ok) {
+      throw new Error(result.error || 'Błąd weryfikacji kodu')
+    }
+
+    const { error: verifyError } = await supabase.auth.verifyOtp({
+      token_hash: result.token,
+      type: 'magiclink'
+    })
+
+    if (verifyError) {
+      console.error('Error verifying OTP token:', verifyError)
+      throw new Error(verifyError.message || 'Błąd podczas logowania')
+    }
+
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.user) {
+      throw new Error('Nie udało się pobrać sesji')
+    }
+
+    const userWithRole = await getUserWithRole(session.user)
+    setUser(userWithRole)
+    toast.success('Zalogowano pomyślnie!')
+    return userWithRole
+  }
+
   const logout = async () => {
     try {
       console.log('Attempting logout...')
@@ -218,7 +282,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, studentLogin, logout }}>
       {children}
     </AuthContext.Provider>
   )

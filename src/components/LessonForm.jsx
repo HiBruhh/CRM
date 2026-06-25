@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, useImperativeHandle, forwardRef } from 'react'
 import { Calendar, Clock, User, Car, Trash2, X } from 'lucide-react'
+import { sendLessonEmail } from '../services/studentNotificationService'
 import { useSupabase } from '../contexts/SupabaseContext'
 import { useAuth } from '../contexts/AuthContext'
 import toast from 'react-hot-toast'
@@ -38,6 +39,8 @@ const LessonForm = forwardRef(({ lesson, onSave, onCancel, onDurationChange }, r
     status: 'pending',
     notes: ''
   })
+
+  const [isProposal, setIsProposal] = useState(false)
 
   const calculateEndTime = () => {
     if (!formData.start_date || !formData.start_time || !formData.duration_minutes) {
@@ -553,10 +556,12 @@ const LessonForm = forwardRef(({ lesson, onSave, onCancel, onDurationChange }, r
         start_time: formatLocalTime(startTime),
         end_time: formatLocalTime(endTime),
         duration_minutes: formData.duration_minutes,
-        status: formData.status,
+        status: lesson && lesson.id ? formData.status : (isProposal ? 'proposed' : formData.status),
         notes: formData.notes,
         organization_id: organizationId
       }
+
+      let affectedLessonId = lesson?.id
 
       if (lesson && lesson.id) {
         const { error } = await supabase
@@ -567,14 +572,30 @@ const LessonForm = forwardRef(({ lesson, onSave, onCancel, onDurationChange }, r
         if (error) throw error
         toast.success('Jazda zaktualizowana pomyślnie!')
       } else {
-        const { error } = await supabase
+        const { data: insertedLesson, error } = await supabase
           .from('driving_lessons')
           .insert(lessonData)
+          .select('id')
+          .single()
 
         if (error) throw error
-        toast.success('Jazda dodana pomyślnie!')
+        affectedLessonId = insertedLesson?.id
+        toast.success(isProposal ? 'Propozycja jazdy wysłana do kursanta!' : 'Jazda dodana pomyślnie!')
       }
 
+      // Send email notification
+      if (affectedLessonId) {
+        try {
+          const emailType = lesson && lesson.id
+            ? 'updated'
+            : (isProposal ? 'proposed' : 'scheduled')
+          await sendLessonEmail(affectedLessonId, emailType)
+        } catch (emailError) {
+          console.error('Błąd wysyłania powiadomienia e-mail:', emailError)
+        }
+      }
+
+      setIsProposal(false)
       onSave()
       onCancel()
     } catch (error) {
@@ -779,6 +800,24 @@ const LessonForm = forwardRef(({ lesson, onSave, onCancel, onDurationChange }, r
               required
             />
           </div>
+
+          {!lesson?.id && (
+            <div className="flex items-center gap-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+              <input
+                type="checkbox"
+                id="isProposal"
+                checked={isProposal}
+                onChange={(e) => setIsProposal(e.target.checked)}
+                className="h-4 w-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
+              />
+              <label htmlFor="isProposal" className="text-sm text-gray-700 dark:text-dark-700 cursor-pointer">
+                <span className="font-medium">Wyślij jako propozycję</span>
+                <span className="block text-gray-500 dark:text-dark-500">
+                  Kursant musi zaakceptować jazdę w swojej strefie
+                </span>
+              </label>
+            </div>
+          )}
 
           <div>
             <label className={`block text-sm font-medium text-gray-700 dark:text-dark-700 ${labelMargin}`}>

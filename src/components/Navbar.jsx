@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useSupabase } from '../contexts/SupabaseContext'
 import ThemeToggle from '../components/ThemeToggle'
-import { LogOut, LayoutDashboard, Calendar, Users, UserCog, Home, Shield, User, ChevronDown, Settings, Bell, Building2, Car, Fuel, Menu, X } from 'lucide-react'
+import { LogOut, LayoutDashboard, Calendar, Users, UserCog, Home, Shield, User, ChevronDown, Settings, Bell, Building2, Car, Fuel, Menu, X, FileText } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const Navbar = () => {
@@ -141,6 +141,7 @@ const Navbar = () => {
       title: 'Zarządzanie',
       items: [
         { path: '/instructors', label: 'Instruktorzy', icon: UserCog, adminOnly: true },
+        { path: '/admin/documents', label: 'Dokumenty', icon: FileText, adminOnly: true },
         { path: '/fleet', label: 'Moja Flota', icon: Car, adminOnly: true },
         { path: '/fuel-report', label: 'Raport Paliwa', icon: Fuel, instructorOnly: true }
       ]

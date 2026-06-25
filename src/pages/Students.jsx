@@ -4,6 +4,7 @@ import { useSupabase } from '../contexts/SupabaseContext'
 import { useNavigate } from 'react-router-dom'
 import { Car, Users, Plus, Search, Edit, Trash2, Phone, Mail, Clock, X, MapPin, User, FileText, Building2 } from 'lucide-react'
 import LoadingSpinner from '../components/LoadingSpinner'
+import { sendStudentActivationEmail } from '../services/studentAuthService'
 import toast from 'react-hot-toast'
 
 const Students = () => {
@@ -292,19 +293,27 @@ const Students = () => {
 
   const generateStudentId = async () => {
     try {
-      const { data: lastStudent } = await supabase
+      const { data: students } = await supabase
         .from('students')
         .select('student_id')
-        .order('student_id', { ascending: false })
-        .limit(1)
-        .single()
+        .ilike('student_id', 'KURS-%')
 
-      let nextNumber = 1
-      if (lastStudent?.student_id) {
-        const lastNumber = parseInt(lastStudent.student_id.replace('KURS-', ''), 10)
-        nextNumber = lastNumber + 1
+      let maxNumber = 0
+      if (students) {
+        for (const student of students) {
+          if (student.student_id) {
+            const match = student.student_id.match(/KURS-(\d+)/)
+            if (match) {
+              const num = parseInt(match[1], 10)
+              if (!isNaN(num) && num > maxNumber) {
+                maxNumber = num
+              }
+            }
+          }
+        }
       }
 
+      const nextNumber = maxNumber + 1
       return `KURS-${nextNumber.toString().padStart(4, '0')}`
     } catch (error) {
       console.error('Error generating student ID:', error)
@@ -365,7 +374,7 @@ const Students = () => {
         organizationId = user.organizationId
       }
 
-      const { error } = await supabase
+      const { data: insertedStudent, error } = await supabase
         .from('students')
         .insert({
           student_id: studentId,
@@ -380,10 +389,22 @@ const Students = () => {
           required_hours: formData.required_hours,
           organization_id: organizationId
         })
+        .select('id')
+        .single()
 
       if (error) throw error
 
-      toast.success('Kursant został dodany pomyślnie')
+      if (formData.email && insertedStudent?.id) {
+        try {
+          await sendStudentActivationEmail(insertedStudent.id)
+          toast.success('Kursant został dodany. Wysłano e-mail aktywacyjny.')
+        } catch (emailError) {
+          console.error('Błąd wysyłania e-maila aktywacyjnego:', emailError)
+          toast.success('Kursant został dodany, ale nie udało się wysłać e-maila aktywacyjnego.')
+        }
+      } else {
+        toast.success('Kursant został dodany pomyślnie')
+      }
       setIsAdding(false)
       setFormData({
         first_name: '',

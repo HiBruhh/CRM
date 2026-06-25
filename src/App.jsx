@@ -2,8 +2,11 @@ import React, { useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { SupabaseProvider, useSupabase } from './contexts/SupabaseContext'
+import LandingPage from './pages/LandingPage'
+import LoginChoice from './pages/LoginChoice'
 import Login from './pages/Login'
 import ResetPassword from './pages/ResetPassword'
+import ConfirmEmailChange from './pages/ConfirmEmailChange'
 import Dashboard from './pages/Dashboard'
 import AdminPanel from './pages/AdminPanel'
 import InstructorPanel from './pages/InstructorPanel'
@@ -19,6 +22,15 @@ import OrganizationManagement from './pages/OrganizationManagement'
 import Fleet from './pages/Fleet'
 import VehicleDetail from './pages/VehicleDetail'
 import FuelReport from './pages/FuelReport'
+import StudentLogin from './pages/StudentLogin'
+import StudentActivate from './pages/StudentActivate'
+import StudentDashboard from './pages/StudentDashboard'
+import StudentSchedule from './pages/StudentSchedule'
+import StudentLessons from './pages/StudentLessons'
+import StudentDocuments from './pages/StudentDocuments'
+import StudentMyProfile from './pages/StudentMyProfile'
+import AdminDocuments from './pages/AdminDocuments'
+import StudentLayout from './components/StudentLayout'
 import ProtectedRoute from './components/ProtectedRoute'
 import LoadingSpinner from './components/LoadingSpinner'
 import Navbar from './components/Navbar'
@@ -27,7 +39,8 @@ function AppContent() {
   const { user, loading } = useAuth()
   const supabase = useSupabase()
   const location = useLocation()
-  const isPublicAuthPage = location.pathname === '/reset-password' || location.pathname === '/login'
+  const publicPages = ['/', '/login', '/instructor/login', '/student/login', '/reset-password', '/confirm-email-change']
+  const isPublicPage = publicPages.includes(location.pathname) || location.pathname.startsWith('/confirm-email-change')
 
   const setPrimaryColorVariables = (hex) => {
     const root = document.documentElement
@@ -59,7 +72,7 @@ function AppContent() {
 
   useEffect(() => {
     const applyOrgColor = async () => {
-      if (!user?.organizationId) {
+      if (isPublicPage || !user?.organizationId) {
         resetPrimaryColorVariables()
         return
       }
@@ -75,7 +88,7 @@ function AppContent() {
       setPrimaryColorVariables(data.primary_color)
     }
     applyOrgColor()
-  }, [user?.organizationId, supabase])
+  }, [isPublicPage, user?.organizationId, supabase])
 
   if (loading) {
     return <LoadingSpinner text="Ładowanie aplikacji..." />
@@ -83,13 +96,18 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-dark-50">
-      {user && !isPublicAuthPage && <Navbar />}
-      <main className={`min-h-screen ${user && !isPublicAuthPage ? 'pt-16 lg:pl-64' : ''}`}>
+      {user && !isPublicPage && !location.pathname.startsWith('/student/') && <Navbar />}
+      <main className={`min-h-screen ${user && !isPublicPage && !location.pathname.startsWith('/student/') ? 'pt-16 lg:pl-64' : ''}`}>
         <Routes>
-          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginChoice />} />
+          <Route path="/instructor/login" element={<Login />} />
+          <Route path="/student/login" element={<StudentLogin />} />
+          <Route path="/student/activate" element={<StudentActivate />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/confirm-email-change" element={<ConfirmEmailChange />} />
         <Route 
-          path="/" 
+          path="/home" 
           element={
             <ProtectedRoute>
               {(user?.role === 'admin' || user?.isSuperAdmin || user?.role === 'org_admin') ? (
@@ -233,6 +251,55 @@ function AppContent() {
           element={
             <ProtectedRoute requiredRole="instructor">
               <FuelReport />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/documents" 
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <AdminDocuments />
+            </ProtectedRoute>
+          } 
+        />
+        {/* Student Zone */}
+        <Route 
+          path="/student/dashboard" 
+          element={
+            <ProtectedRoute requiredRole="student">
+              <StudentLayout><StudentDashboard /></StudentLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/student/schedule" 
+          element={
+            <ProtectedRoute requiredRole="student">
+              <StudentLayout><StudentSchedule /></StudentLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/student/lessons" 
+          element={
+            <ProtectedRoute requiredRole="student">
+              <StudentLayout><StudentLessons /></StudentLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/student/documents" 
+          element={
+            <ProtectedRoute requiredRole="student">
+              <StudentLayout><StudentDocuments /></StudentLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/student/profile" 
+          element={
+            <ProtectedRoute requiredRole="student">
+              <StudentLayout><StudentMyProfile /></StudentLayout>
             </ProtectedRoute>
           } 
         />
